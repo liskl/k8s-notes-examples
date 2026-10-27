@@ -5,6 +5,6 @@ kind: Kustomization
 configMapGenerator:
   - name: preview
     literals:
-      - "message=the main branch"
+      - "message=this pull request"
 generatorOptions:
   disableNameSuffixHash: true
