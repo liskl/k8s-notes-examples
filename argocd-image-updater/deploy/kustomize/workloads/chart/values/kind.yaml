@@ -3,6 +3,6 @@
 replicaCount: 1
 image:
   repository: ghcr.io/stefanprodan/podinfo
-  tag: 6.15.0
+  tag: 6.16.0
 ui:
   message: "Helm rendered this, and Image Updater picks its tag."
