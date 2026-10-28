@@ -3,3 +3,6 @@ kind: Kustomization
 resources:
   - ../../bases/1.0.0
   - httproute.yaml
+images:
+  - name: ghcr.io/liskl/k8s-notes-examples/image-updater-demo
+    newTag: 1.20.0
