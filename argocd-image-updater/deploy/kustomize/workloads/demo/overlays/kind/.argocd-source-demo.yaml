@@ -1,3 +1,0 @@
-kustomize:
-  images:
-  - ghcr.io/liskl/k8s-notes-examples/image-updater-demo:1.16.0
