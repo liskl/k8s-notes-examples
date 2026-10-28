@@ -14,7 +14,8 @@ name: argocd-publish
 on:
   push:
     branches: [main]
-    tags: ['argocd-*']   # GitHub does not apply the paths filter to tag pushes, so every argocd-* tag publishes
+    tags: ['argocd-[0-9]*']   # Field Guide 02's own tags only (argocd-1.0): Field Guide 03's argocd-image-updater-* tags
+                              # must not publish this folder. GitHub does not apply the paths filter to tag pushes.
     paths:
       - 'argocd/**'
       - '.github/workflows/argocd-publish.yaml'
