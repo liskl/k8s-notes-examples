@@ -1,0 +1,69 @@
+# Publishes a new tag of Field Guide 03's demo image, ghcr.io/<owner>/k8s-notes-examples/image-updater-demo, for Argo CD
+# Image Updater to find. Run it by hand, with the tag to publish:
+#
+#   gh workflow run argocd-image-updater-demo-image.yaml -R <owner>/k8s-notes-examples -f tag=1.1.0
+#   gh workflow run argocd-image-updater-demo-image.yaml -R <owner>/k8s-notes-examples -f tag=1.1.1 -f also_tag=stable
+#
+# Each run builds the image again for linux/amd64 and linux/arm64, so every tag is its own build: its own digest and its
+# own creation time. also_tag puts a second, moving tag on the same build (the digest strategy watches one like it).
+# Running it again with a tag that already exists rebuilds that tag too: a "pinned" tag that moved.
+# A reader runs it in their own fork; the package then lands under their own name, public if the fork is public.
+name: argocd-image-updater-demo-image
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to publish, for example 1.0.0'
+        required: true
+        type: string
+      also_tag:
+        description: 'A second tag for the same build, for example stable; empty for none'
+        required: false
+        default: ''
+        type: string
+concurrency:
+  group: argocd-image-updater-demo-image
+  cancel-in-progress: false
+permissions:
+  contents: read
+  packages: write   # push to ghcr.io with the workflow's GITHUB_TOKEN
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check the tags and name the image
+        id: names
+        env:
+          TAG: ${{ inputs.tag }}
+          ALSO_TAG: ${{ inputs.also_tag }}
+        run: |
+          re='^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$'
+          [[ $TAG =~ $re ]] || { echo "not a valid image tag: $TAG" >&2; exit 1; }
+          [[ -z $ALSO_TAG || $ALSO_TAG =~ $re ]] || { echo "not a valid image tag: $ALSO_TAG" >&2; exit 1; }
+          image="ghcr.io/${GITHUB_REPOSITORY,,}/image-updater-demo"   # ghcr.io wants lower case
+          {
+            echo "tags<<EOT"
+            echo "$image:$TAG"
+            [[ -z $ALSO_TAG ]] || echo "$image:$ALSO_TAG"
+            echo "EOT"
+          } >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: argocd-image-updater/demo-image
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: false
+          sbom: false
+          build-args: |
+            TAG=${{ inputs.tag }}
+            SOURCE=https://github.com/${{ github.repository }}
+          tags: ${{ steps.names.outputs.tags }}
+          annotations: |
+            index:org.opencontainers.image.source=https://github.com/${{ github.repository }}
