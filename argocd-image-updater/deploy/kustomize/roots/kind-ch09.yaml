@@ -1,7 +1,7 @@
 # This book's root: an app of apps for its own Applications only, beside Field Guide 02's root (which keeps
 # Argo CD, the Gateway, kgateway, podinfo and welcome). From chapter 8 on, Image Updater writes to Git, so the
 # root and the apps it writes follow the branch argocd-image-updater-lab: in your own fork (make the branch
-# there from the tag argocd-image-updater-1.0 and change liskl to your GitHub user in repoURL).
+# there from the tag argocd-image-updater-1.0, with your GitHub user in repoURL in place of the book's owner).
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:

@@ -1,5 +1,7 @@
 # Two copies of the demo app, made by an ApplicationSet from a list. The ApplicationSet controller keeps each
 # Application exactly as its template says, so it takes back a field Image Updater's argocd write-back adds.
+# Like every app from chapter 8 on, both follow the lab branch on your fork, where the workload names your own
+# package.
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -21,7 +23,7 @@ spec:
       project: default
       source:
         repoURL: https://github.com/liskl/k8s-notes-examples.git
-        targetRevision: argocd-image-updater-1.0
+        targetRevision: argocd-image-updater-lab
         path: argocd-image-updater/deploy/kustomize/workloads/demo-set
       destination:
         server: https://kubernetes.default.svc
