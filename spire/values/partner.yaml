@@ -1,0 +1,38 @@
+# A second SPIRE on the same cluster, release spire-b, for a second trust domain. Everything two installs
+# would share must differ: namespaces, the agent's socket folder on the nodes, the CSI driver's name, the
+# agent's ports (it uses the node's network) and the bundle ConfigMap. No OIDC provider, no default identity:
+# its workloads get IDs from a ClusterSPIFFEID of class spire-mgmt-spire-b.
+global:
+  spire:
+    clusterName: lab
+    trustDomain: partner.k8s-notes.test
+    bundleConfigMap: spire-bundle-b
+    recommendations:
+      enabled: true
+    namespaces:
+      create: true
+      server: {name: spire-server-b}
+      system: {name: spire-system-b}
+    caSubject:
+      country: US
+      organization: k8s-notes
+      commonName: partner.k8s-notes.test
+spire-server:
+  federation:
+    enabled: true
+  controllerManager:
+    identities:
+      clusterSPIFFEIDs:
+        default:
+          enabled: false
+spire-agent:
+  socketPath: /run/spire/agent-sockets-b/spire-agent.sock
+  healthChecks: {port: 9983}
+  telemetry:
+    prometheus: {port: 9990}
+spiffe-csi-driver:
+  pluginName: b.csi.spiffe.io
+  agentSocketPath: /run/spire/agent-sockets-b/spire-agent.sock
+  healthChecks: {port: 9811}
+spiffe-oidc-discovery-provider:
+  enabled: false

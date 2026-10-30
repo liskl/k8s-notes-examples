@@ -1,0 +1,60 @@
+# The partner's side: a restricted namespace, IDs for its apps from partner's own controller manager (class
+# spire-mgmt-spire-b), federated with lab, and an mTLS server that lets in lab's client. Its Pod mounts the
+# partner's CSI driver, b.csi.spiffe.io, so it talks to the partner's agent.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: partner
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+---
+apiVersion: spire.spiffe.io/v1alpha1
+kind: ClusterSPIFFEID
+metadata:
+  name: partner-apps
+spec:
+  className: spire-mgmt-spire-b
+  spiffeIDTemplate: "spiffe://{{ .TrustDomain }}/app/{{ index .PodMeta.Labels \"app\" }}"
+  namespaceSelector:
+    matchLabels: {kubernetes.io/metadata.name: partner}
+  federatesWith: [lab.k8s-notes.test]
+  ttl: 2m
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: server, namespace: partner}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: server, namespace: partner}
+spec:
+  selector:
+    matchLabels: {app: server}
+  template:
+    metadata:
+      labels: {app: server}
+    spec:
+      serviceAccountName: server
+      securityContext: {runAsNonRoot: true, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: demo
+          image: "ghcr.io/liskl/k8s-notes-examples/spiffe-demo:1.0.0@sha256:\
+            6c311eb45eb1683ba1a5e2c4ecac8c260d6e008efcf06a12e0145d4c0528287d"
+          args: [serve, -allow, spiffe://lab.k8s-notes.test/app/client]
+          env:
+            - name: SPIFFE_ENDPOINT_SOCKET
+              value: unix:///spiffe-workload-api/spire-agent.sock
+          ports: [{containerPort: 8443}]
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+          volumeMounts:
+            - {name: spiffe-workload-api, mountPath: /spiffe-workload-api, readOnly: true}
+      volumes:
+        - name: spiffe-workload-api
+          csi: {driver: b.csi.spiffe.io, readOnly: true}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: server, namespace: partner}
+spec:
+  selector: {app: server}
+  ports: [{port: 8443, targetPort: 8443}]

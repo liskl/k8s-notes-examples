@@ -1,0 +1,13 @@
+# Trust domain lab.k8s-notes.test fetches partner.k8s-notes.test's bundle from its endpoint, and checks the
+# endpoint by its SPIFFE ID. Class spire-mgmt-spire: lab's controller manager makes the relationship.
+apiVersion: spire.spiffe.io/v1alpha1
+kind: ClusterFederatedTrustDomain
+metadata:
+  name: partner
+spec:
+  className: spire-mgmt-spire
+  trustDomain: partner.k8s-notes.test
+  bundleEndpointURL: https://spire-b-server.spire-server-b.svc.cluster.local:8443
+  bundleEndpointProfile:
+    type: https_spiffe
+    endpointSPIFFEID: spiffe://partner.k8s-notes.test/spire/server
