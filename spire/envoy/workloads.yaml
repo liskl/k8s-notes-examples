@@ -1,0 +1,95 @@
+# Two Pods, each an Envoy beside an app that knows nothing of TLS: envoy-backend (busybox httpd on
+# 127.0.0.1:8080) and envoy-client (curl, which calls 127.0.0.1:9001). Each Envoy reads its config from a
+# ConfigMap (kubectl create configmap ... --from-file) and its certificates from the agent's socket.
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: envoy-backend, namespace: demo}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: envoy-client, namespace: demo}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: envoy-backend, namespace: demo}
+spec:
+  selector:
+    matchLabels: {app: envoy-backend}
+  template:
+    metadata:
+      labels: {app: envoy-backend}
+    spec:
+      serviceAccountName: envoy-backend
+      securityContext: {runAsNonRoot: true, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: envoy
+          image: "docker.io/envoyproxy/envoy:v1.40.2@sha256:\
+            8de97e654644827d62afdbf7e1d3dc9fee01a8690d410dd1c63a30dc6b6cecbb"
+          args: [-c, /etc/envoy/envoy.yaml]
+          ports: [{containerPort: 8443}]
+          securityContext:
+            runAsUser: 101
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: spiffe-workload-api, mountPath: /spiffe-workload-api, readOnly: true}
+            - {name: envoy-config, mountPath: /etc/envoy, readOnly: true}
+        - name: app
+          image: "docker.io/library/busybox:1.37.0@sha256:\
+            a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec"
+          command: [sh, -c, "mkdir -p /tmp/www && echo 'hello from a plain HTTP app' > /tmp/www/index.html &&
+            exec httpd -f -p 127.0.0.1:8080 -h /tmp/www"]
+          securityContext:
+            runAsUser: 65534
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+      volumes:
+        - name: spiffe-workload-api
+          csi: {driver: csi.spiffe.io, readOnly: true}
+        - name: envoy-config
+          configMap: {name: envoy-backend}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: envoy-backend, namespace: demo}
+spec:
+  selector: {app: envoy-backend}
+  ports: [{port: 8443, targetPort: 8443}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: envoy-client, namespace: demo}
+spec:
+  selector:
+    matchLabels: {app: envoy-client}
+  template:
+    metadata:
+      labels: {app: envoy-client}
+    spec:
+      serviceAccountName: envoy-client
+      securityContext: {runAsNonRoot: true, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: envoy
+          image: "docker.io/envoyproxy/envoy:v1.40.2@sha256:\
+            8de97e654644827d62afdbf7e1d3dc9fee01a8690d410dd1c63a30dc6b6cecbb"
+          args: [-c, /etc/envoy/envoy.yaml]
+          securityContext:
+            runAsUser: 101
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: spiffe-workload-api, mountPath: /spiffe-workload-api, readOnly: true}
+            - {name: envoy-config, mountPath: /etc/envoy, readOnly: true}
+        - name: curl
+          image: "docker.io/curlimages/curl:8.11.1@sha256:\
+            c1fe1679c34d9784c1b0d1e5f62ac0a79fca01fb6377cdd33e90473c6f9f9a69"
+          command: [sleep, infinity]
+          securityContext:
+            runAsUser: 100
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+      volumes:
+        - name: spiffe-workload-api
+          csi: {driver: csi.spiffe.io, readOnly: true}
+        - name: envoy-config
+          configMap: {name: envoy-client}

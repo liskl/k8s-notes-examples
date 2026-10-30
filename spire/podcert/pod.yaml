@@ -1,0 +1,27 @@
+# Kubernetes' own certificates for Pods (PodCertificateRequest, GA in v1.37): the kubelet makes a key, asks a
+# signer for a certificate and writes both into the volume. No signer ships with Kubernetes, and nothing serves
+# the made-up signer named here, so the request stays pending and the Pod never starts: the API, with no SPIRE.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: podcert
+  namespace: demo
+spec:
+  serviceAccountName: whoami
+  securityContext: {runAsNonRoot: true, seccompProfile: {type: RuntimeDefault}}
+  containers:
+    - name: demo
+      image: "ghcr.io/liskl/k8s-notes-examples/spiffe-demo:1.0.0@sha256:\
+        6c311eb45eb1683ba1a5e2c4ecac8c260d6e008efcf06a12e0145d4c0528287d"
+      args: [inspect, /var/run/podcert/credentials.pem]
+      securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+      volumeMounts:
+        - {name: podcert, mountPath: /var/run/podcert, readOnly: true}
+  volumes:
+    - name: podcert
+      projected:
+        sources:
+          - podCertificate:
+              signerName: example.com/nobody
+              keyType: ECDSAP256
+              credentialBundlePath: credentials.pem

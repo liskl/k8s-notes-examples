@@ -1,0 +1,36 @@
+# The mTLS client: it waits, logging its SVID's renewals (spiffe-demo watch); kubectl exec runs spiffe-demo
+# call in it, which talks only to a server that presents the SPIFFE ID it expects.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: client
+  namespace: demo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client
+  namespace: demo
+spec:
+  selector:
+    matchLabels: {app: client}
+  template:
+    metadata:
+      labels: {app: client}
+    spec:
+      serviceAccountName: client
+      securityContext: {runAsNonRoot: true, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: demo
+          image: "ghcr.io/liskl/k8s-notes-examples/spiffe-demo:1.0.0@sha256:\
+            6c311eb45eb1683ba1a5e2c4ecac8c260d6e008efcf06a12e0145d4c0528287d"
+          args: [watch]
+          env:
+            - name: SPIFFE_ENDPOINT_SOCKET              # where go-spiffe finds the Workload API
+              value: unix:///spiffe-workload-api/spire-agent.sock
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+          volumeMounts:
+            - {name: spiffe-workload-api, mountPath: /spiffe-workload-api, readOnly: true}
+      volumes:
+        - name: spiffe-workload-api                     # the agent's socket, mounted by the SPIFFE CSI driver
+          csi: {driver: csi.spiffe.io, readOnly: true}

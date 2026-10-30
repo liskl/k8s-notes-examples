@@ -1,0 +1,46 @@
+# An mTLS server on 8443 that lets in exactly one SPIFFE ID, the client's. Its own certificate and the bundle it
+# checks callers against come from the SPIRE agent, and are renewed in memory: no files, no restarts.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: backend
+  namespace: demo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: demo
+spec:
+  selector:
+    matchLabels: {app: backend}
+  template:
+    metadata:
+      labels: {app: backend}
+    spec:
+      serviceAccountName: backend
+      securityContext: {runAsNonRoot: true, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: demo
+          image: "ghcr.io/liskl/k8s-notes-examples/spiffe-demo:1.0.0@sha256:\
+            6c311eb45eb1683ba1a5e2c4ecac8c260d6e008efcf06a12e0145d4c0528287d"
+          args: [serve, -allow, spiffe://lab.k8s-notes.test/app/client]
+          ports: [{containerPort: 8443}]
+          env:
+            - name: SPIFFE_ENDPOINT_SOCKET              # where go-spiffe finds the Workload API
+              value: unix:///spiffe-workload-api/spire-agent.sock
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+          volumeMounts:
+            - {name: spiffe-workload-api, mountPath: /spiffe-workload-api, readOnly: true}
+      volumes:
+        - name: spiffe-workload-api                     # the agent's socket, mounted by the SPIFFE CSI driver
+          csi: {driver: csi.spiffe.io, readOnly: true}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: demo
+spec:
+  selector: {app: backend}
+  ports: [{port: 8443, targetPort: 8443}]

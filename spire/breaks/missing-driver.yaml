@@ -1,0 +1,20 @@
+# A break: a Pod that asks for a CSI driver no node has registered (one letter too many). The kubelet cannot
+# mount the volume, so the Pod waits in ContainerCreating and the Events say why.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nodriver
+  namespace: demo
+spec:
+  securityContext: {runAsNonRoot: true, seccompProfile: {type: RuntimeDefault}}
+  containers:
+    - name: demo
+      image: "ghcr.io/liskl/k8s-notes-examples/spiffe-demo:1.0.0@sha256:\
+        6c311eb45eb1683ba1a5e2c4ecac8c260d6e008efcf06a12e0145d4c0528287d"
+      args: [whoami]
+      securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+      volumeMounts:
+        - {name: spiffe-workload-api, mountPath: /spiffe-workload-api, readOnly: true}
+  volumes:
+    - name: spiffe-workload-api
+      csi: {driver: csi.spiffe.iox, readOnly: true}
