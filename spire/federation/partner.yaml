@@ -38,8 +38,8 @@ spec:
       securityContext: {runAsNonRoot: true, seccompProfile: {type: RuntimeDefault}}
       containers:
         - name: demo
-          image: "ghcr.io/liskl/k8s-notes-examples/spiffe-demo:1.0.0@sha256:\
-            6c311eb45eb1683ba1a5e2c4ecac8c260d6e008efcf06a12e0145d4c0528287d"
+          image: "ghcr.io/liskl/k8s-notes-examples/spiffe-demo:1.0.2@sha256:\
+            1d1610c550f5ee02c5b11e0a13113daf7313f1a615ad078fd5c961dc5d5d3a05"
           args: [serve, -allow, spiffe://lab.k8s-notes.test/app/client]
           env:
             - name: SPIFFE_ENDPOINT_SOCKET
