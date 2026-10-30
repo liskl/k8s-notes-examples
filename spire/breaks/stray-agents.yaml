@@ -57,9 +57,11 @@ spec:
         - {name: conf, mountPath: /conf}
         - {name: bundle, mountPath: /bundle}
         - {name: token, mountPath: /var/run/secrets/tokens}
+        - {name: work, mountPath: /tmp/spire}
   volumes:
     - {name: conf, configMap: {name: stray-agents}}
     - {name: bundle, configMap: {name: spire-bundle}}
+    - {name: work, emptyDir: {}}
     - name: token
       projected:
         sources:
@@ -80,9 +82,11 @@ spec:
         - {name: conf, mountPath: /conf}
         - {name: bundle, mountPath: /bundle}
         - {name: token, mountPath: /var/run/secrets/tokens}
+        - {name: work, mountPath: /tmp/spire}
   volumes:
     - {name: conf, configMap: {name: stray-agents}}
     - {name: bundle, configMap: {name: spire-bundle}}
+    - {name: work, emptyDir: {}}
     - name: token
       projected:
         sources:
@@ -103,9 +107,11 @@ spec:
         - {name: conf, mountPath: /conf}
         - {name: bundle, mountPath: /bundle}
         - {name: token, mountPath: /var/run/secrets/tokens}
+        - {name: work, mountPath: /tmp/spire}
   volumes:
     - {name: conf, configMap: {name: stray-agents}}
     - {name: bundle, configMap: {name: spire-bundle}}
+    - {name: work, emptyDir: {}}
     - name: token
       projected:
         sources:
