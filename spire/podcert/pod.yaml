@@ -1,6 +1,7 @@
-# Kubernetes' own certificates for Pods (PodCertificateRequest, GA in v1.37): the kubelet makes a key, asks a
-# signer for a certificate and writes both into the volume. No signer ships with Kubernetes, and nothing serves
-# the made-up signer named here, so the request stays pending and the Pod never starts: the API, with no SPIRE.
+# Kubernetes' own certificates for Pods (PodCertificateRequest, GA in v1.37): the kubelet makes a key, asks
+# a signer for a certificate and writes both into the volume. No signer ships with Kubernetes, and nothing
+# serves the made-up signer named here, so the request stays pending and the Pod never starts: the API, with
+# no SPIRE.
 apiVersion: v1
 kind: Pod
 metadata:

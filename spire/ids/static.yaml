@@ -1,5 +1,6 @@
-# Static entries declared in Kubernetes: a node alias for every agent of cluster lab (its parent is the server,
-# so it is an entry for nodes), and one workload under it. IDs may be paths: the trust domain is filled in.
+# Static entries declared in Kubernetes: a node alias for every agent of cluster lab (its parent is the
+# server, so it is an entry for nodes), and one workload under it. IDs may be paths: the trust domain is
+# filled in.
 apiVersion: spire.spiffe.io/v1alpha1
 kind: ClusterStaticEntry
 metadata:

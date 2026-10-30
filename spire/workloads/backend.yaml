@@ -1,5 +1,6 @@
-# An mTLS server on 8443 that lets in exactly one SPIFFE ID, the client's. Its own certificate and the bundle it
-# checks callers against come from the SPIRE agent, and are renewed in memory: no files, no restarts.
+# An mTLS server on 8443 that lets in exactly one SPIFFE ID, the client's. Its own certificate and the
+# bundle it checks callers against come from the SPIRE agent, and are renewed in memory: no files, no
+# restarts.
 apiVersion: v1
 kind: ServiceAccount
 metadata:
