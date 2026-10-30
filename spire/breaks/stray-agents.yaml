@@ -1,5 +1,6 @@
-# Three agents that do not belong: each runs spire-agent once against the lab's server with one thing wrong for
-# k8s_psat node attestation, so its log shows the server's answer. The DaemonSet's agents are not touched.
+# Three agents that do not belong: each runs spire-agent once against the lab's server with one
+# thing wrong for k8s_psat node attestation, so its log shows the server's answer. The DaemonSet's
+# agents are not touched.
 #   stray-cluster   names a cluster the server has no settings for ("other")
 #   stray-sa        runs as a ServiceAccount the server does not allow (spire-system:stray)
 #   stray-audience  presents a token for another audience ("other")
