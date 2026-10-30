@@ -1,0 +1,55 @@
+# Chapter 10's files workload again, in namespace fast: its SVID lives 2 minutes, so spiffe-helper rewrites
+# /certs about every minute. The ConfigMap spiffe-helper must exist in fast too.
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: files, namespace: fast}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: files, namespace: fast}
+spec:
+  selector:
+    matchLabels: {app: files}
+  template:
+    metadata:
+      labels: {app: files}
+    spec:
+      serviceAccountName: files
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 65532                       # /certs belongs to the shared group
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: spiffe-helper
+          image: "ghcr.io/spiffe/spiffe-helper:0.12.3@sha256:\
+            58f28329f6be32ab5a80248931845157d858f0aebdf7e462217a43f019e3452f"
+          args: [-config, /etc/spiffe-helper/helper.conf]
+          securityContext:
+            runAsUser: 1000                  # the image runs as root unless told
+            runAsGroup: 65532
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          readinessProbe: {httpGet: {path: /ready, port: 8081}}
+          livenessProbe: {httpGet: {path: /live, port: 8081}}
+          volumeMounts:
+            - {name: spiffe-workload-api, mountPath: /spiffe-workload-api, readOnly: true}
+            - {name: certs, mountPath: /certs}
+            - {name: helper-conf, mountPath: /etc/spiffe-helper, readOnly: true}
+        - name: app
+          image: "docker.io/library/busybox:1.37.0@sha256:\
+            a7dbc319b1438115a207e11930dc4bb3e643dcb3ec0bdd694bb36cd8fad289ec"
+          command: [sleep, infinity]
+          securityContext:
+            runAsUser: 65534
+            runAsGroup: 65532                # the helper's group: it may read the key
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: certs, mountPath: /certs, readOnly: true}
+      volumes:
+        - name: spiffe-workload-api
+          csi: {driver: csi.spiffe.io, readOnly: true}
+        - name: certs
+          emptyDir: {medium: Memory}
+        - name: helper-conf
+          configMap: {name: spiffe-helper}

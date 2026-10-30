@@ -1,0 +1,4 @@
+# How long an agent keeps trying a server whose certificate its bundle cannot verify before it starts over
+# (a new bundle from the ConfigMap, node attestation again). The chart's 10m; 30s so the lab shows it.
+spire-agent:
+  rebootstrapDelay: 30s

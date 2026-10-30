@@ -1,0 +1,112 @@
+# Three agents that do not belong: each runs spire-agent once against the lab's server with one thing wrong for
+# k8s_psat node attestation, so its log shows the server's answer. The DaemonSet's agents are not touched.
+#   stray-cluster   names a cluster the server has no settings for ("other")
+#   stray-sa        runs as a ServiceAccount the server does not allow (spire-system:stray)
+#   stray-audience  presents a token for another audience ("other")
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: stray, namespace: spire-system}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: stray-agents, namespace: spire-system}
+data:
+  lab.conf: |
+    agent {
+      data_dir = "/tmp/spire"
+      server_address = "spire-server.spire-server"
+      server_port = "443"
+      socket_path = "/tmp/spire/agent.sock"
+      trust_bundle_path = "/bundle/bundle.spiffe"
+      trust_bundle_format = "spiffe"
+      trust_domain = "lab.k8s-notes.test"
+    }
+    plugins {
+      NodeAttestor "k8s_psat" { plugin_data { cluster = "lab" } }
+      KeyManager "memory" { plugin_data {} }
+      WorkloadAttestor "unix" { plugin_data {} }
+    }
+  other.conf: |
+    agent {
+      data_dir = "/tmp/spire"
+      server_address = "spire-server.spire-server"
+      server_port = "443"
+      socket_path = "/tmp/spire/agent.sock"
+      trust_bundle_path = "/bundle/bundle.spiffe"
+      trust_bundle_format = "spiffe"
+      trust_domain = "lab.k8s-notes.test"
+    }
+    plugins {
+      NodeAttestor "k8s_psat" { plugin_data { cluster = "other" } }
+      KeyManager "memory" { plugin_data {} }
+      WorkloadAttestor "unix" { plugin_data {} }
+    }
+---
+apiVersion: v1
+kind: Pod
+metadata: {name: stray-cluster, namespace: spire-system}
+spec:
+  serviceAccountName: spire-agent
+  restartPolicy: Never
+  securityContext: {runAsUser: 1000, runAsNonRoot: true}
+  containers:
+    - name: agent
+      image: ghcr.io/spiffe/spire-agent:1.15.5
+      args: [-config, /conf/other.conf]
+      volumeMounts:
+        - {name: conf, mountPath: /conf}
+        - {name: bundle, mountPath: /bundle}
+        - {name: token, mountPath: /var/run/secrets/tokens}
+  volumes:
+    - {name: conf, configMap: {name: stray-agents}}
+    - {name: bundle, configMap: {name: spire-bundle}}
+    - name: token
+      projected:
+        sources:
+          - serviceAccountToken: {path: spire-agent, audience: spire-server, expirationSeconds: 600}
+---
+apiVersion: v1
+kind: Pod
+metadata: {name: stray-sa, namespace: spire-system}
+spec:
+  serviceAccountName: stray
+  restartPolicy: Never
+  securityContext: {runAsUser: 1000, runAsNonRoot: true}
+  containers:
+    - name: agent
+      image: ghcr.io/spiffe/spire-agent:1.15.5
+      args: [-config, /conf/lab.conf]
+      volumeMounts:
+        - {name: conf, mountPath: /conf}
+        - {name: bundle, mountPath: /bundle}
+        - {name: token, mountPath: /var/run/secrets/tokens}
+  volumes:
+    - {name: conf, configMap: {name: stray-agents}}
+    - {name: bundle, configMap: {name: spire-bundle}}
+    - name: token
+      projected:
+        sources:
+          - serviceAccountToken: {path: spire-agent, audience: spire-server, expirationSeconds: 600}
+---
+apiVersion: v1
+kind: Pod
+metadata: {name: stray-audience, namespace: spire-system}
+spec:
+  serviceAccountName: spire-agent
+  restartPolicy: Never
+  securityContext: {runAsUser: 1000, runAsNonRoot: true}
+  containers:
+    - name: agent
+      image: ghcr.io/spiffe/spire-agent:1.15.5
+      args: [-config, /conf/lab.conf]
+      volumeMounts:
+        - {name: conf, mountPath: /conf}
+        - {name: bundle, mountPath: /bundle}
+        - {name: token, mountPath: /var/run/secrets/tokens}
+  volumes:
+    - {name: conf, configMap: {name: stray-agents}}
+    - {name: bundle, configMap: {name: spire-bundle}}
+    - name: token
+      projected:
+        sources:
+          - serviceAccountToken: {path: spire-agent, audience: other, expirationSeconds: 600}
