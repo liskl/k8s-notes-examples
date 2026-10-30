@@ -1,0 +1,20 @@
+# Identities by the app label, for every Pod in namespace demo that has one:
+# spiffe://<trust domain>/app/<app>. className must name this install's controller manager
+# (<release namespace>-<release name>), or it ignores the object without a word. A Pod this selects loses
+# the chart's default identity, which is only a fallback.
+apiVersion: spire.spiffe.io/v1alpha1
+kind: ClusterSPIFFEID
+metadata:
+  name: by-app
+spec:
+  className: spire-mgmt-spire
+  spiffeIDTemplate: "spiffe://{{ .TrustDomain }}/app/{{ index .PodMeta.Labels \"app\" }}"
+  namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: demo
+  podSelector:
+    matchExpressions:
+      - {key: app, operator: Exists}
+  dnsNameTemplates:
+    - "{{ index .PodMeta.Labels \"app\" }}.demo.svc"
+  ttl: 1h

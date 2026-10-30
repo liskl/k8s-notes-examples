@@ -1,0 +1,20 @@
+# by-app again, now federated with partner.k8s-notes.test: the SVIDs it gives keep their IDs, and each
+# Pod's bundle set gains the partner's CA, so its apps can check partner's servers. Apply it only once the
+# partner's bundle is in this server (federatesWith a trust domain with no bundle makes the entries fail).
+apiVersion: spire.spiffe.io/v1alpha1
+kind: ClusterSPIFFEID
+metadata:
+  name: by-app
+spec:
+  className: spire-mgmt-spire
+  spiffeIDTemplate: "spiffe://{{ .TrustDomain }}/app/{{ index .PodMeta.Labels \"app\" }}"
+  namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: demo
+  podSelector:
+    matchExpressions:
+      - {key: app, operator: Exists}
+  dnsNameTemplates:
+    - "{{ index .PodMeta.Labels \"app\" }}.demo.svc"
+  ttl: 1h
+  federatesWith: [partner.k8s-notes.test]

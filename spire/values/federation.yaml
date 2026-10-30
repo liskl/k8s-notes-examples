@@ -1,0 +1,6 @@
+# Serve this trust domain's bundle to other SPIRE servers: the bundle endpoint, port 8443 on the server's
+# Service, profile https_spiffe (a peer checks the endpoint by its SPIFFE ID,
+# spiffe://<trust domain>/spire/server).
+spire-server:
+  federation:
+    enabled: true

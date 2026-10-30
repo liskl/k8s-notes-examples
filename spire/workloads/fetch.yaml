@@ -1,0 +1,32 @@
+# SPIRE's own CLI as a workload: spire-agent api fetch x509 through the CSI driver's socket, once. Its default
+# output is the SVID's ID and dates only (no key: never add -output json or -write here). The image has no
+# shell, so the command is the container's args.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fetch
+  namespace: demo
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fetch
+  namespace: demo
+spec:
+  serviceAccountName: fetch
+  restartPolicy: OnFailure          # the first try can come before the Pod's entry reaches the agent
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000                 # the spire-agent image runs as root unless told otherwise
+    seccompProfile: {type: RuntimeDefault}
+  containers:
+    - name: fetch
+      image: ghcr.io/spiffe/spire-agent:1.15.5
+      command: [/opt/spire/bin/spire-agent]
+      args: [api, fetch, x509, -socketPath, /spiffe-workload-api/spire-agent.sock]
+      securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+      volumeMounts:
+        - {name: spiffe-workload-api, mountPath: /spiffe-workload-api, readOnly: true}
+  volumes:
+    - name: spiffe-workload-api
+      csi: {driver: csi.spiffe.io, readOnly: true}

@@ -1,0 +1,77 @@
+# Envoy beside a client that speaks plain HTTP to 127.0.0.1:9001: it opens mTLS to the backend Envoy and talks
+# only to the backend Envoy's SPIFFE ID. Certificate and bundles come from the SPIRE agent by SDS, as on the
+# other side.
+node:
+  id: envoy-client
+  cluster: lab
+admin:
+  address:
+    socket_address: {address: 127.0.0.1, port_value: 9901}
+static_resources:
+  listeners:
+    - name: outbound_plain
+      address:
+        socket_address: {address: 127.0.0.1, port_value: 9001}
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": "type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.\
+                  v3.HttpConnectionManager"
+                stat_prefix: outbound
+                route_config:
+                  virtual_hosts:
+                    - name: backend
+                      domains: ["*"]
+                      routes:
+                        - match: {prefix: "/"}
+                          route: {cluster: backend_mtls}
+                http_filters:
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+  clusters:
+    - name: backend_mtls
+      type: STRICT_DNS
+      connect_timeout: 2s
+      load_assignment:
+        cluster_name: backend_mtls
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address: {address: envoy-backend.demo.svc.cluster.local, port_value: 8443}
+      transport_socket:
+        name: envoy.transport_sockets.tls
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+          common_tls_context:
+            tls_certificate_sds_secret_configs:
+              - name: default                      # this Pod's X.509-SVID, from the agent
+                sds_config: &spire
+                  resource_api_version: V3
+                  api_config_source:
+                    api_type: GRPC
+                    transport_api_version: V3
+                    grpc_services: [{envoy_grpc: {cluster_name: spire_agent}}]
+            combined_validation_context:
+              default_validation_context:
+                match_typed_subject_alt_names:         # only this server
+                  - san_type: URI
+                    matcher: {exact: "spiffe://lab.k8s-notes.test/app/envoy-backend"}
+              validation_context_sds_secret_config:
+                name: ALL
+                sds_config: *spire
+    - name: spire_agent
+      connect_timeout: 1s
+      typed_extension_protocol_options:
+        envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+          "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+          explicit_http_config: {http2_protocol_options: {}}
+      load_assignment:
+        cluster_name: spire_agent
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    pipe: {path: /spiffe-workload-api/spire-agent.sock}

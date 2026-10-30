@@ -1,0 +1,12 @@
+# And the other way: partner.k8s-notes.test fetches lab.k8s-notes.test's bundle. Class spire-mgmt-spire-b.
+apiVersion: spire.spiffe.io/v1alpha1
+kind: ClusterFederatedTrustDomain
+metadata:
+  name: lab
+spec:
+  className: spire-mgmt-spire-b
+  trustDomain: lab.k8s-notes.test
+  bundleEndpointURL: https://spire-server.spire-server.svc.cluster.local:8443
+  bundleEndpointProfile:
+    type: https_spiffe
+    endpointSPIFFEID: spiffe://lab.k8s-notes.test/spire/server

@@ -1,0 +1,37 @@
+# A workload for registration entries made by hand: ServiceAccount byhand, label app=byhand, a container named
+# demo. The chart's default ClusterSPIFFEID gives it ns/demo/sa/byhand; every hand-made entry that matches it
+# adds an SVID of its own.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: byhand
+  namespace: demo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: byhand
+  namespace: demo
+spec:
+  selector:
+    matchLabels: {app: byhand}
+  template:
+    metadata:
+      labels: {app: byhand}
+    spec:
+      serviceAccountName: byhand
+      securityContext: {runAsNonRoot: true, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: demo
+          image: "ghcr.io/liskl/k8s-notes-examples/spiffe-demo:1.0.2@sha256:\
+            1d1610c550f5ee02c5b11e0a13113daf7313f1a615ad078fd5c961dc5d5d3a05"
+          args: [watch]
+          env:
+            - name: SPIFFE_ENDPOINT_SOCKET
+              value: unix:///spiffe-workload-api/spire-agent.sock
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+          volumeMounts:
+            - {name: spiffe-workload-api, mountPath: /spiffe-workload-api, readOnly: true}
+      volumes:
+        - name: spiffe-workload-api
+          csi: {driver: csi.spiffe.io, readOnly: true}

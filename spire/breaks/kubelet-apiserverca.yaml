@@ -1,0 +1,7 @@
+# A break: check the kubelet's certificate against the cluster's CA. kind's kubelet serves a self-signed
+# certificate, not one the cluster's CA signed, so every workload attestation fails.
+spire-agent:
+  workloadAttestors:
+    k8s:
+      verification:
+        type: apiServerCA

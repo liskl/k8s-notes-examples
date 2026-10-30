@@ -1,0 +1,51 @@
+# A namespace for short-lived identities: X.509-SVIDs of 2 minutes and JWT-SVIDs of 1 minute, so a renewal
+# shows within a minute. Its own ClusterSPIFFEID sets the TTLs; the rest of the lab keeps the chart's.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: fast
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+---
+apiVersion: spire.spiffe.io/v1alpha1
+kind: ClusterSPIFFEID
+metadata:
+  name: fast
+spec:
+  className: spire-mgmt-spire
+  spiffeIDTemplate: "spiffe://{{ .TrustDomain }}/fast/{{ index .PodMeta.Labels \"app\" }}"
+  namespaceSelector:
+    matchLabels: {kubernetes.io/metadata.name: fast}
+  ttl: 2m
+  jwtTtl: 1m
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: ticker, namespace: fast}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: ticker, namespace: fast}
+spec:
+  selector:
+    matchLabels: {app: ticker}
+  template:
+    metadata:
+      labels: {app: ticker}
+    spec:
+      serviceAccountName: ticker
+      securityContext: {runAsNonRoot: true, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: demo
+          image: "ghcr.io/liskl/k8s-notes-examples/spiffe-demo:1.0.2@sha256:\
+            1d1610c550f5ee02c5b11e0a13113daf7313f1a615ad078fd5c961dc5d5d3a05"
+          args: [watch]
+          env:
+            - name: SPIFFE_ENDPOINT_SOCKET
+              value: unix:///spiffe-workload-api/spire-agent.sock
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+          volumeMounts:
+            - {name: spiffe-workload-api, mountPath: /spiffe-workload-api, readOnly: true}
+      volumes:
+        - name: spiffe-workload-api
+          csi: {driver: csi.spiffe.io, readOnly: true}

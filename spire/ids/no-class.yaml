@@ -1,0 +1,11 @@
+# The same identity with no className: the controller manager watches only its own class, so it makes no entry
+# and writes no status. Nothing tells you why.
+apiVersion: spire.spiffe.io/v1alpha1
+kind: ClusterSPIFFEID
+metadata:
+  name: no-class
+spec:
+  spiffeIDTemplate: "spiffe://{{ .TrustDomain }}/no-class/{{ .PodSpec.ServiceAccountName }}"
+  namespaceSelector:
+    matchLabels:
+      kubernetes.io/metadata.name: demo

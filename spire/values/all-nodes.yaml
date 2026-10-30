@@ -1,0 +1,12 @@
+# The agent and the CSI driver on every node: No. 00's three control-plane nodes carry the taint
+# node-role.kubernetes.io/control-plane:NoSchedule, and the chart gives neither DaemonSet a toleration.
+spire-agent:
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+spiffe-csi-driver:
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
