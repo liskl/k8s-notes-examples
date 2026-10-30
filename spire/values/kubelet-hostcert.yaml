@@ -1,0 +1,8 @@
+# Make the agent check the kubelet's certificate when it asks the kubelet which Pod a process belongs to. The
+# chart's default is "skip". On kind the kubelet serves a self-signed certificate, so "hostCert" (an init
+# container copies it from the node's /var/lib/kubelet/pki) works, and "apiServerCA" does not.
+spire-agent:
+  workloadAttestors:
+    k8s:
+      verification:
+        type: hostCert

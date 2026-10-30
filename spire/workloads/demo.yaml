@@ -1,0 +1,10 @@
+# The book's workload namespace. Pod Security "restricted": a Pod that mounts the SPIFFE CSI driver's volume
+# needs nothing more (no hostPath, no privilege), so it runs at the strictest level.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/audit: restricted

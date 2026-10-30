@@ -1,0 +1,17 @@
+# Field Guide 04: SPIRE on No. 00's lab, chart spire 0.30.4 (release spire, namespace spire-mgmt).
+# recommendations.enabled puts the server, the controller manager and the OIDC discovery provider in
+# spire-server (Pod Security restricted), and the agent and the CSI driver in spire-system (privileged): the
+# chart's production layout. It also turns on strictMode, which refuses the chart's example names, so the CA
+# subject is set here.
+global:
+  spire:
+    clusterName: lab                  # No. 00's kind cluster: the psat cluster name and the entry ID prefix
+    trustDomain: lab.k8s-notes.test   # .test can never be a real domain (RFC 2606)
+    recommendations:
+      enabled: true
+    namespaces:
+      create: true
+    caSubject:
+      country: US
+      organization: k8s-notes
+      commonName: lab.k8s-notes.test
