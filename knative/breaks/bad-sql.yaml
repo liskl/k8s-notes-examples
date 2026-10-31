@@ -1,0 +1,15 @@
+# A Trigger whose CESQL does not parse: Eventing's webhook refuses it before it is stored.
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  name: badsql
+  namespace: events
+spec:
+  broker: default
+  filters:
+  - cesql: "type = = 'dev.k8s-notes.order'"
+  subscriber:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: display

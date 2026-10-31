@@ -1,0 +1,20 @@
+# The wrong port: podinfo listens on 9898, but this says 8080, so queue-proxy's readiness check
+# never connects.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: badport
+  namespace: demo
+spec:
+  template:
+    metadata:
+      annotations:
+        serving.knative.dev/progress-deadline: "30s"
+    spec:
+      containers:
+      - image: "ghcr.io/stefanprodan/podinfo:6.15.0\
+          @sha256:ec73780a8425f59ea49f5bc8cdff0d598805a224fbaa1f86c67a244f250fa9da"
+        ports:
+        - containerPort: 8080
+        securityContext:
+          runAsUser: 100

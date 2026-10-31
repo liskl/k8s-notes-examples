@@ -1,0 +1,20 @@
+# A Pod to ask from inside the cluster: cluster-local Services and metrics endpoints. curl's
+# image runs as the user curl_user, a name, so the Pod gives it a number for "restricted".
+apiVersion: v1
+kind: Pod
+metadata:
+  name: curl
+  namespace: demo
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 100
+    seccompProfile: {type: RuntimeDefault}
+  containers:
+  - name: curl
+    image: "curlimages/curl:8.23.0\
+      @sha256:3fb7e13e5d179a845c97d78204f3f1064d1907037f26a3ebf91710571151fd93"
+    command: ["sleep", "infinity"]
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities: {drop: ["ALL"]}

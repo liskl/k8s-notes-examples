@@ -1,0 +1,50 @@
+# Field Guide 05: the lab's KnativeServing, one whole file a state (README.md lists them).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: knative-serving
+---
+apiVersion: operator.knative.dev/v1beta1
+kind: KnativeServing
+metadata:
+  name: knative-serving
+  namespace: knative-serving
+spec:
+  version: "1.24"
+  ingress:
+    kourier:
+      enabled: false
+    gateway-api:
+      enabled: true
+  high-availability:
+    replicas: 2
+  workloads:
+  - name: controller
+    resources:
+    - container: controller
+      requests:
+        cpu: 50m
+        memory: 64Mi
+  config:
+    network:
+      ingress-class: gateway-api.ingress.networking.knative.dev
+    domain:
+      localhost: ""
+    features:
+      secure-pod-defaults: enabled
+      domainmapping-direct-route-traffic: enabled
+    autoscaler:
+      scale-to-zero-grace-period: 10s
+    gateway:
+      external-gateways: |
+        - class: kgateway
+          gateway: kgateway-system/http
+          service: kgateway-system/http
+          supported-features:
+          - HTTPRouteRequestTimeout
+      local-gateways: |
+        - class: kgateway
+          gateway: kgateway-system/knative-local
+          service: kgateway-system/knative-local
+          supported-features:
+          - HTTPRouteRequestTimeout

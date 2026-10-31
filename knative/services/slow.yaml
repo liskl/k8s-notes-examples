@@ -1,0 +1,18 @@
+# A Service with a 5 s request timeout. podinfo's /delay/10 answers after 10 s, so it never gets
+# the chance.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: slow
+  namespace: demo
+spec:
+  template:
+    spec:
+      timeoutSeconds: 5
+      containers:
+      - image: "ghcr.io/stefanprodan/podinfo:6.15.0\
+          @sha256:ec73780a8425f59ea49f5bc8cdff0d598805a224fbaa1f86c67a244f250fa9da"
+        ports:
+        - containerPort: 9898
+        securityContext:
+          runAsUser: 100

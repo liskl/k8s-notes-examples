@@ -1,0 +1,15 @@
+# Field Guide 05: Knative Eventing 1.24 on the lab, installed by the Knative Operator. Eventing
+# needs no networking layer and no Serving: the Broker's ingress is a Service in
+# knative-eventing.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: knative-eventing
+---
+apiVersion: operator.knative.dev/v1beta1
+kind: KnativeEventing
+metadata:
+  name: knative-eventing
+  namespace: knative-eventing
+spec:
+  version: "1.24"

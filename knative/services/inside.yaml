@@ -1,0 +1,22 @@
+# A Service only the cluster can reach: the visibility label makes Knative give it a
+# cluster-local URL and no external route.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: inside
+  namespace: demo
+  labels:
+    networking.knative.dev/visibility: cluster-local
+spec:
+  template:
+    spec:
+      containers:
+      - image: "ghcr.io/stefanprodan/podinfo:6.15.0\
+          @sha256:ec73780a8425f59ea49f5bc8cdff0d598805a224fbaa1f86c67a244f250fa9da"
+        ports:
+        - containerPort: 9898
+        env:
+        - name: PODINFO_UI_MESSAGE
+          value: inside
+        securityContext:
+          runAsUser: 100

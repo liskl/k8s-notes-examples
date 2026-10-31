@@ -1,0 +1,19 @@
+# The first Knative Service: No. 00's podinfo, as Knative runs it. podinfo listens on 9898 and
+# ignores the PORT Knative passes, so the port is named here. This one has no securityContext at
+# all (chapter 3).
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: hello
+  namespace: demo
+spec:
+  template:
+    spec:
+      containers:
+      - image: "ghcr.io/stefanprodan/podinfo:6.15.0\
+          @sha256:ec73780a8425f59ea49f5bc8cdff0d598805a224fbaa1f86c67a244f250fa9da"
+        ports:
+        - containerPort: 9898
+        env:
+        - name: PODINFO_UI_MESSAGE
+          value: first

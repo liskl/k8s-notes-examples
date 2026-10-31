@@ -1,0 +1,32 @@
+# A ContainerSource: Knative runs this container as a Deployment and points its K_SINK at
+# display. Here the heartbeats sample, one event every 10 s.
+apiVersion: sources.knative.dev/v1
+kind: ContainerSource
+metadata:
+  name: beats
+  namespace: events
+spec:
+  template:
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: heartbeat
+        image: "gcr.io/knative-releases/knative.dev/eventing/cmd/heartbeats\
+          @sha256:8e5b96f98fb4d14c0ce0a3c0adfbea4bd17f935a75ab415861148a29c1a54d37"
+        args: ["--period=10s"]
+        env:
+        - name: POD_NAME
+          valueFrom: {fieldRef: {fieldPath: metadata.name}}
+        - name: POD_NAMESPACE
+          valueFrom: {fieldRef: {fieldPath: metadata.namespace}}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: {drop: ["ALL"]}
+  sink:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: display

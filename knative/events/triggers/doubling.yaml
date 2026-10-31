@@ -1,0 +1,23 @@
+# The same failing subscriber, retried exponentially: 3 retries, waiting 1, 2, then 4 s, then
+# the dead letter sink.
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  name: doubling
+  namespace: events
+spec:
+  broker: default
+  filter:
+    attributes:
+      type: dev.k8s-notes.doubling
+  subscriber:
+    uri: http://flaky.events.svc.cluster.local/status/500
+  delivery:
+    retry: 3
+    backoffPolicy: exponential
+    backoffDelay: PT1S
+    deadLetterSink:
+      ref:
+        apiVersion: v1
+        kind: Service
+        name: display

@@ -1,0 +1,20 @@
+# A second name for the Service hello: the DomainMapping maps hello.example.test to it, and the
+# ClusterDomainClaim says the namespace demo may use that name (Knative does not hand out claims
+# by itself). example.test is reserved (RFC 2606), so it can never be a real domain.
+apiVersion: networking.internal.knative.dev/v1alpha1
+kind: ClusterDomainClaim
+metadata:
+  name: hello.example.test
+spec:
+  namespace: demo
+---
+apiVersion: serving.knative.dev/v1beta1
+kind: DomainMapping
+metadata:
+  name: hello.example.test
+  namespace: demo
+spec:
+  ref:
+    apiVersion: serving.knative.dev/v1
+    kind: Service
+    name: hello

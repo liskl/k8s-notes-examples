@@ -1,0 +1,23 @@
+# The other autoscaler: a Kubernetes HorizontalPodAutoscaler on CPU. It needs metrics-server,
+# which No. 00's lab does not run, so on the lab this Service runs one Pod and never scales
+# (chapter 6 shows what that looks like).
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: cpu
+  namespace: demo
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/class: hpa.autoscaling.knative.dev
+        autoscaling.knative.dev/metric: cpu
+        autoscaling.knative.dev/target: "50"
+    spec:
+      containers:
+      - image: "ghcr.io/stefanprodan/podinfo:6.15.0\
+          @sha256:ec73780a8425f59ea49f5bc8cdff0d598805a224fbaa1f86c67a244f250fa9da"
+        ports:
+        - containerPort: 9898
+        securityContext:
+          runAsUser: 100

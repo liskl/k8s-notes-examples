@@ -1,0 +1,15 @@
+# A Trigger filtered by CESQL, the CloudEvents SQL expression language: an order, from a shop.
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  name: shop
+  namespace: events
+spec:
+  broker: default
+  filters:
+  - cesql: "type = 'dev.k8s-notes.order' AND source LIKE 'shop%'"
+  subscriber:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: display

@@ -1,0 +1,17 @@
+# What a Function answers goes back to the Broker as a new event, of type function.response.
+# This Trigger sends those to display, so the answer shows.
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  name: replies
+  namespace: events
+spec:
+  broker: default
+  filter:
+    attributes:
+      type: function.response
+  subscriber:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: display

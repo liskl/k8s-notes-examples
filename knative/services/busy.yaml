@@ -1,0 +1,22 @@
+# A Service for the load chapter: each Pod is meant to hold 5 requests at a time, and there are
+# never more than 5 Pods. podinfo's /delay/1 answers after one second, so N requests in flight
+# is N seconds of work a second.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: busy
+  namespace: demo
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/target: "5"
+        autoscaling.knative.dev/max-scale: "5"
+    spec:
+      containers:
+      - image: "ghcr.io/stefanprodan/podinfo:6.15.0\
+          @sha256:ec73780a8425f59ea49f5bc8cdff0d598805a224fbaa1f86c67a244f250fa9da"
+        ports:
+        - containerPort: 9898
+        securityContext:
+          runAsUser: 100

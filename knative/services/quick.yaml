@@ -1,0 +1,22 @@
+# A Service that goes to zero fast: a 6 s window (the shortest Knative allows) and a target
+# burst capacity of 0, so the activator leaves the request path as soon as a Pod is up, and
+# comes back only at zero.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: quick
+  namespace: demo
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/window: "6s"
+        autoscaling.knative.dev/target-burst-capacity: "0"
+    spec:
+      containers:
+      - image: "ghcr.io/stefanprodan/podinfo:6.15.0\
+          @sha256:ec73780a8425f59ea49f5bc8cdff0d598805a224fbaa1f86c67a244f250fa9da"
+        ports:
+        - containerPort: 9898
+        securityContext:
+          runAsUser: 100

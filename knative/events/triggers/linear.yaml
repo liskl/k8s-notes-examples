@@ -1,0 +1,23 @@
+# A Trigger to a subscriber that always fails, with its own delivery: 3 retries, waiting 1, 2,
+# then 3 s, then the event goes to the dead letter sink (display) with the error attached.
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  name: linear
+  namespace: events
+spec:
+  broker: default
+  filter:
+    attributes:
+      type: dev.k8s-notes.linear
+  subscriber:
+    uri: http://flaky.events.svc.cluster.local/status/500
+  delivery:
+    retry: 3
+    backoffPolicy: linear
+    backoffDelay: PT1S
+    deadLetterSink:
+      ref:
+        apiVersion: v1
+        kind: Service
+        name: display
