@@ -1,0 +1,158 @@
+# Four small steps for the Sequence and the Parallel: Knative's appender sample takes an event,
+# adds its MESSAGE to the event's message, and answers with the new event. Plain Deployments and
+# Services, as display is.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: step-one
+  namespace: events
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: step-one}}
+  template:
+    metadata: {labels: {app: step-one}}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: appender
+        image: "gcr.io/knative-releases/knative.dev/eventing/cmd/appender\
+          @sha256:e252d7b0fd1389ed59ea2f82a4edd6955ccc47e636eeb5ae0afd312df2cadcf4"
+        env:
+        - name: MESSAGE
+          value: " - step one"
+        ports:
+        - containerPort: 8080
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: {drop: ["ALL"]}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: step-one
+  namespace: events
+spec:
+  selector: {app: step-one}
+  ports:
+  - port: 80
+    targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: step-two
+  namespace: events
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: step-two}}
+  template:
+    metadata: {labels: {app: step-two}}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: appender
+        image: "gcr.io/knative-releases/knative.dev/eventing/cmd/appender\
+          @sha256:e252d7b0fd1389ed59ea2f82a4edd6955ccc47e636eeb5ae0afd312df2cadcf4"
+        env:
+        - name: MESSAGE
+          value: " - step two"
+        ports:
+        - containerPort: 8080
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: {drop: ["ALL"]}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: step-two
+  namespace: events
+spec:
+  selector: {app: step-two}
+  ports:
+  - port: 80
+    targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: left
+  namespace: events
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: left}}
+  template:
+    metadata: {labels: {app: left}}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: appender
+        image: "gcr.io/knative-releases/knative.dev/eventing/cmd/appender\
+          @sha256:e252d7b0fd1389ed59ea2f82a4edd6955ccc47e636eeb5ae0afd312df2cadcf4"
+        env:
+        - name: MESSAGE
+          value: " - left"
+        ports:
+        - containerPort: 8080
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: {drop: ["ALL"]}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: left
+  namespace: events
+spec:
+  selector: {app: left}
+  ports:
+  - port: 80
+    targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: right
+  namespace: events
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: right}}
+  template:
+    metadata: {labels: {app: right}}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: appender
+        image: "gcr.io/knative-releases/knative.dev/eventing/cmd/appender\
+          @sha256:e252d7b0fd1389ed59ea2f82a4edd6955ccc47e636eeb5ae0afd312df2cadcf4"
+        env:
+        - name: MESSAGE
+          value: " - right"
+        ports:
+        - containerPort: 8080
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: {drop: ["ALL"]}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: right
+  namespace: events
+spec:
+  selector: {app: right}
+  ports:
+  - port: 80
+    targetPort: 8080

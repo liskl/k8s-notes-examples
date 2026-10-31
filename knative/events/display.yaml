@@ -1,0 +1,37 @@
+# event_display, Knative's sample sink: it logs every CloudEvent it receives. A plain Deployment
+# and Service, so Eventing needs no Serving here.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: display
+  namespace: events
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: display}}
+  template:
+    metadata: {labels: {app: display}}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: display
+        image: "gcr.io/knative-releases/knative.dev/eventing/cmd/event_display\
+          @sha256:e991bf5c8c0d37ec1660eb8b340a893c2525ef5b35203ffc236ee39fb7edae6c"
+        ports:
+        - containerPort: 8080
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: {drop: ["ALL"]}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: display
+  namespace: events
+spec:
+  selector: {app: display}
+  ports:
+  - port: 80
+    targetPort: 8080

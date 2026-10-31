@@ -1,0 +1,17 @@
+# A Trigger with the newer filters list: here a prefix, so every type that starts with
+# dev.k8s-notes.note. matches.
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  name: notes
+  namespace: events
+spec:
+  broker: default
+  filters:
+  - prefix:
+      type: dev.k8s-notes.note.
+  subscriber:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: display

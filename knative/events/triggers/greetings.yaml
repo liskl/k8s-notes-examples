@@ -1,0 +1,16 @@
+# A Trigger with the classic filter: every attribute named must match exactly.
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  name: greetings
+  namespace: events
+spec:
+  broker: default
+  filter:
+    attributes:
+      type: dev.k8s-notes.greeting
+  subscriber:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: display

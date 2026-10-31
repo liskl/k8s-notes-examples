@@ -1,0 +1,12 @@
+# A Sequence: each step's answer is the next step's event, and the last answer goes to display.
+apiVersion: flows.knative.dev/v1
+kind: Sequence
+metadata:
+  name: pipeline
+  namespace: events
+spec:
+  steps:
+  - ref: {apiVersion: v1, kind: Service, name: step-one}
+  - ref: {apiVersion: v1, kind: Service, name: step-two}
+  reply:
+    ref: {apiVersion: v1, kind: Service, name: display}

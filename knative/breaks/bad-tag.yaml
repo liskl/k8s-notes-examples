@@ -1,0 +1,19 @@
+# A tag that does not exist: Knative cannot turn it into a digest, so the Revision never gets a
+# Pod. The progress deadline is 30 s, not Knative's 10 minutes, so it fails fast.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: badtag
+  namespace: demo
+spec:
+  template:
+    metadata:
+      annotations:
+        serving.knative.dev/progress-deadline: "30s"
+    spec:
+      containers:
+      - image: "ghcr.io/stefanprodan/podinfo:0.0.0-nope"
+        ports:
+        - containerPort: 9898
+        securityContext:
+          runAsUser: 100

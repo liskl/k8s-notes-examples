@@ -1,0 +1,23 @@
+# A Channel and one Subscription: the plumbing a Broker is built on. Whatever is posted to the
+# Channel goes to every subscriber; with no class named, the Channel is an InMemoryChannel.
+apiVersion: messaging.knative.dev/v1
+kind: Channel
+metadata:
+  name: news
+  namespace: events
+---
+apiVersion: messaging.knative.dev/v1
+kind: Subscription
+metadata:
+  name: news-to-display
+  namespace: events
+spec:
+  channel:
+    apiVersion: messaging.knative.dev/v1
+    kind: Channel
+    name: news
+  subscriber:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: display

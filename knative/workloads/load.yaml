@@ -1,0 +1,20 @@
+# fortio, a load generator: it keeps N requests in flight (-c N), which is the number Knative's
+# autoscaler counts. Run it with kubectl exec. It needs no root, so it runs as nobody.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: load
+  namespace: demo
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+    seccompProfile: {type: RuntimeDefault}
+  containers:
+  - name: fortio
+    image: "fortio/fortio:1.76.0\
+      @sha256:3dd31ddeb4f962a1dae8cc2a0bce62c408ac830c8435bbea51b1e0fd4c8f7181"
+    args: ["server", "-http-port", "8080"]
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities: {drop: ["ALL"]}

@@ -1,0 +1,14 @@
+# A Parallel: every branch gets its own copy of the event, and every answer goes to display.
+apiVersion: flows.knative.dev/v1
+kind: Parallel
+metadata:
+  name: fork
+  namespace: events
+spec:
+  branches:
+  - subscriber:
+      ref: {apiVersion: v1, kind: Service, name: left}
+  - subscriber:
+      ref: {apiVersion: v1, kind: Service, name: right}
+  reply:
+    ref: {apiVersion: v1, kind: Service, name: display}

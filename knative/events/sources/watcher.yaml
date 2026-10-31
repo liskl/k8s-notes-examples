@@ -1,0 +1,25 @@
+# An ApiServerSource: Kubernetes Events in the namespace events, turned into CloudEvents for
+# display. It runs as the ServiceAccount watcher, which may read nothing yet (watcher-rbac.yaml
+# gives it that).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: watcher
+  namespace: events
+---
+apiVersion: sources.knative.dev/v1
+kind: ApiServerSource
+metadata:
+  name: k8s-events
+  namespace: events
+spec:
+  serviceAccountName: watcher
+  mode: Reference
+  resources:
+  - apiVersion: v1
+    kind: Event
+  sink:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: display

@@ -1,0 +1,20 @@
+# A SinkBinding: every Job labelled app=heartbeat in this namespace gets K_SINK (display's
+# address) put into its containers' environment, and sends there. Apply the binding first, then
+# the Job (heartbeat-job.yaml).
+apiVersion: sources.knative.dev/v1
+kind: SinkBinding
+metadata:
+  name: bind-heartbeat
+  namespace: events
+spec:
+  subject:
+    apiVersion: batch/v1
+    kind: Job
+    selector:
+      matchLabels:
+        app: heartbeat
+  sink:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: display

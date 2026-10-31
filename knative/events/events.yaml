@@ -1,0 +1,17 @@
+# The book's namespace for events (Pod Security "restricted"), and its Broker. With no class
+# named, the Broker is Knative's multi-tenant channel-based one over an InMemoryChannel: fine
+# for a lab, not for production (events live only in memory).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: events
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/audit: restricted
+---
+apiVersion: eventing.knative.dev/v1
+kind: Broker
+metadata:
+  name: default
+  namespace: events

@@ -1,0 +1,20 @@
+# An image no node can pull: no registry listens on localhost:30599. The image is a digest, so
+# Knative does not ask the registry first; the kubelet does, and fails.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: nopull
+  namespace: demo
+spec:
+  template:
+    metadata:
+      annotations:
+        serving.knative.dev/progress-deadline: "30s"
+    spec:
+      containers:
+      - image: "localhost:30599/nope\
+          @sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        ports:
+        - containerPort: 9898
+        securityContext:
+          runAsUser: 100

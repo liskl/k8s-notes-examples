@@ -1,0 +1,25 @@
+# Field Guide 05: the lab's KnativeServing, one whole file a state (README.md lists them).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: knative-serving
+---
+apiVersion: operator.knative.dev/v1beta1
+kind: KnativeServing
+metadata:
+  name: knative-serving
+  namespace: knative-serving
+spec:
+  version: "1.24"
+  ingress:
+    kourier:
+      enabled: true
+  config:
+    network:
+      ingress-class: kourier.ingress.networking.knative.dev
+    domain:
+      localhost: ""
+    features:
+      secure-pod-defaults: enabled
+    autoscaler:
+      scale-to-zero-grace-period: 10s

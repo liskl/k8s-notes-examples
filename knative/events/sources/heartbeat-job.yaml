@@ -1,0 +1,36 @@
+# A Job that sends one heartbeat CloudEvent to $K_SINK and stops. It knows nothing of Knative:
+# the SinkBinding fills in K_SINK.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: heartbeat-once
+  namespace: events
+  labels:
+    app: heartbeat
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: heartbeat
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: heartbeat
+        image: "gcr.io/knative-releases/knative.dev/eventing/cmd/heartbeats\
+          @sha256:8e5b96f98fb4d14c0ce0a3c0adfbea4bd17f935a75ab415861148a29c1a54d37"
+        args: ["--period=1"]
+        env:
+        - name: ONE_SHOT
+          value: "true"
+        - name: POD_NAME
+          valueFrom: {fieldRef: {fieldPath: metadata.name}}
+        - name: POD_NAMESPACE
+          valueFrom: {fieldRef: {fieldPath: metadata.namespace}}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: {drop: ["ALL"]}

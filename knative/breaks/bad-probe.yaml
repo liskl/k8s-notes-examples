@@ -1,0 +1,23 @@
+# A readiness probe on a path podinfo does not have: it answers 404, so the Pod never becomes
+# ready.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: badprobe
+  namespace: demo
+spec:
+  template:
+    metadata:
+      annotations:
+        serving.knative.dev/progress-deadline: "30s"
+    spec:
+      containers:
+      - image: "ghcr.io/stefanprodan/podinfo:6.15.0\
+          @sha256:ec73780a8425f59ea49f5bc8cdff0d598805a224fbaa1f86c67a244f250fa9da"
+        ports:
+        - containerPort: 9898
+        readinessProbe:
+          httpGet:
+            path: /nope
+        securityContext:
+          runAsUser: 100

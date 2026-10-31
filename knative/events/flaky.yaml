@@ -1,0 +1,40 @@
+# A subscriber that always fails: podinfo answers /status/500 with a 500. At debug level it logs
+# every request, so each delivery attempt shows with its time.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flaky
+  namespace: events
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: flaky}}
+  template:
+    metadata: {labels: {app: flaky}}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 100
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: podinfo
+        image: "ghcr.io/stefanprodan/podinfo:6.15.0\
+          @sha256:ec73780a8425f59ea49f5bc8cdff0d598805a224fbaa1f86c67a244f250fa9da"
+        env:
+        - name: PODINFO_LEVEL
+          value: debug
+        ports:
+        - containerPort: 9898
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities: {drop: ["ALL"]}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flaky
+  namespace: events
+spec:
+  selector: {app: flaky}
+  ports:
+  - port: 80
+    targetPort: 9898

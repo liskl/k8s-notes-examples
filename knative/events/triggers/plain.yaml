@@ -1,0 +1,15 @@
+# The same failing subscriber with no delivery of its own: the Trigger takes the Broker's
+# default (10 retries, exponential from 0.2 s) and has no dead letter sink, so the event is
+# dropped in the end.
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  name: plain
+  namespace: events
+spec:
+  broker: default
+  filter:
+    attributes:
+      type: dev.k8s-notes.plain
+  subscriber:
+    uri: http://flaky.events.svc.cluster.local/status/500

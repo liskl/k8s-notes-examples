@@ -1,0 +1,11 @@
+# The book's namespace for Knative Services and Functions. Pod Security "restricted": Knative's
+# own queue-proxy passes it; the app container passes only once Serving adds secure defaults
+# (chapter 3).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/audit: restricted

@@ -1,0 +1,20 @@
+# A Service that asks for a networking layer the lab does not run: the annotation picks Istio's
+# ingress class for this one Service. Knative still gives it a URL, but nothing ever builds its
+# route.
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: lost
+  namespace: demo
+  annotations:
+    networking.knative.dev/ingress.class: istio.ingress.networking.knative.dev
+spec:
+  template:
+    spec:
+      containers:
+      - image: "ghcr.io/stefanprodan/podinfo:6.15.0\
+          @sha256:ec73780a8425f59ea49f5bc8cdff0d598805a224fbaa1f86c67a244f250fa9da"
+        ports:
+        - containerPort: 9898
+        securityContext:
+          runAsUser: 100

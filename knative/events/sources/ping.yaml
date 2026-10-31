@@ -1,0 +1,32 @@
+# A PingSource: a CloudEvent on a cron schedule, here every minute, into the Broker. A Trigger
+# sends its type (dev.knative.sources.ping) to display.
+apiVersion: sources.knative.dev/v1
+kind: PingSource
+metadata:
+  name: every-minute
+  namespace: events
+spec:
+  schedule: "* * * * *"
+  contentType: application/json
+  data: '{"tick": "yes"}'
+  sink:
+    ref:
+      apiVersion: eventing.knative.dev/v1
+      kind: Broker
+      name: default
+---
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  name: ticks
+  namespace: events
+spec:
+  broker: default
+  filter:
+    attributes:
+      type: dev.knative.sources.ping
+  subscriber:
+    ref:
+      apiVersion: v1
+      kind: Service
+      name: display
