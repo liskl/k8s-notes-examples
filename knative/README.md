@@ -4,8 +4,8 @@ The examples of Field Guide 05, *the Knative Operator and Knative on kind*, from
 Notes zine series. The book installs the Knative Operator from its Helm chart (v1.23.1, then
 v1.24.0) on No. 00's kind lab, runs Knative Serving, Eventing and Functions 1.24.0, and pins the
 tag `knative-1.0`. Knative writes nothing to Git, so the book needs no fork: clone this repo
-read-only at the tag. Functions are built on your machine and pushed only to a registry inside
-the lab.
+read-only at the tag. Functions are built on your machine with func's pack builder and loaded
+onto the lab's nodes with `kind load`: nothing is pushed. A real cluster pulls from a registry.
 
 - `serving/`: the lab's KnativeServing, one whole file a state, each applied with
   `kubectl apply -f` in order: `01-kourier.yaml` (1.23 on Kourier, URLs under `localhost`),
@@ -22,7 +22,8 @@ the lab.
 - `events/`: namespace `events` with its Broker, event_display, a curl Pod and a failing
   subscriber; `triggers/`, `sources/` (PingSource, ApiServerSource, SinkBinding,
   ContainerSource) and `flows/` (Channel, Sequence, Parallel, JobSink).
-- `functions/`: the registry on the lab.
+- `functions/`: a registry to run on the lab, to try the push a real cluster needs (the book's
+  Functions use `kind load` instead).
 - `breaks/`: things that fail on purpose: an ingress class nobody runs, a tag that does not
   exist, the wrong port, a failing probe, an image no node can pull, a filter that does not
   parse.

@@ -1,4 +1,4 @@
-# A container registry on the lab, for the book's Functions: nothing is pushed anywhere public.
+# A registry on the lab, to try the push a real cluster needs: nothing goes anywhere public.
 # The nodes reach it as localhost:30500 (a NodePort, and containerd speaks plain HTTP to
 # localhost); your machine reaches it the same way through "kubectl -n registry port-forward
 # svc/registry 30500:5000". The registry image runs as root, so the namespace is "baseline", not
