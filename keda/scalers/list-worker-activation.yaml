@@ -1,0 +1,23 @@
+# list-worker that wakes only when more than 3 jobs wait (activationListLength); listLength still sets the
+# target of 5 jobs a replica once it is awake.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: list-worker
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: list-worker
+  pollingInterval: 5
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 6
+  triggers:
+    - type: redis
+      metadata:
+        address: redis.redis:6379
+        listName: jobs
+        listLength: "5"
+        activationListLength: "3"
+      authenticationRef:
+        name: redis

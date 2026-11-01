@@ -1,0 +1,16 @@
+# holder scales on memory: 70% of its 32Mi request, averaged over its Pods.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: holder
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: holder
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  triggers:
+    - type: memory
+      metricType: Utilization
+      metadata:
+        value: "70"

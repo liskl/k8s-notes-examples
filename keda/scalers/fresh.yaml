@@ -1,0 +1,21 @@
+# fresh scales on the group "newcomers", which has no committed offsets, with the default offsetResetPolicy.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: fresh
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: fresh
+  pollingInterval: 5
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 6
+  triggers:
+    - type: kafka
+      metadata:
+        bootstrapServers: kafka.kafka:9092
+        consumerGroup: newcomers
+        topic: events
+        lagThreshold: "5"
+        offsetResetPolicy: latest

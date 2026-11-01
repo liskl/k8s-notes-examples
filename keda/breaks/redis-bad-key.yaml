@@ -1,0 +1,32 @@
+# A TriggerAuthentication whose key has a typo (redsi for redis): the Secret exists, the key does not.
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: redis-typo
+  namespace: demo
+spec:
+  secretTargetRef:
+    - parameter: password
+      name: lab-passwords
+      key: redsi
+---
+# checker on Redis, through that TriggerAuthentication.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: checker
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: checker
+  pollingInterval: 5
+  minReplicaCount: 0
+  maxReplicaCount: 3
+  triggers:
+    - type: redis
+      metadata:
+        address: redis.redis:6379
+        listName: checks
+        listLength: "5"
+      authenticationRef:
+        name: redis-typo

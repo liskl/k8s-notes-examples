@@ -1,0 +1,31 @@
+# follower: a web app that keeps one replica for each of burner's Pods.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: follower
+  namespace: demo
+spec:
+  replicas: 0
+  selector:
+    matchLabels: {app: follower}
+  template:
+    metadata:
+      labels: {app: follower}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: app
+          image: "ghcr.io/liskl/k8s-notes-examples/keda-demo:1.0.0@sha256:\
+            60fb369efffd8229e6f406d1010d5a09caa680668b182edc2bae1ed868868fe6"
+          args: ["serve", "-message", "follower"]
+          ports: [{containerPort: 8080}]
+          readinessProbe:
+            httpGet: {path: /healthz, port: 8080}
+            periodSeconds: 2
+          resources:
+            requests: {cpu: 50m, memory: 32Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}

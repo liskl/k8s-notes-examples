@@ -1,0 +1,20 @@
+# A ScaledObject whose target name has a typo (lsit-worker).
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: typo
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: lsit-worker
+  pollingInterval: 5
+  minReplicaCount: 0
+  maxReplicaCount: 3
+  triggers:
+    - type: redis
+      metadata:
+        address: redis.redis:6379
+        listName: checks
+        listLength: "5"
+      authenticationRef:
+        name: redis

@@ -1,0 +1,23 @@
+# Two TriggerAuthentications for RabbitMQ, both a "host" URL from lab-passwords: one over AMQP (port 5672),
+# one over the management plugin's http API (port 15672).
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: rabbitmq
+  namespace: demo
+spec:
+  secretTargetRef:
+    - parameter: host
+      name: lab-passwords
+      key: rabbitmq-url
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: rabbitmq-http
+  namespace: demo
+spec:
+  secretTargetRef:
+    - parameter: host
+      name: lab-passwords
+      key: rabbitmq-http

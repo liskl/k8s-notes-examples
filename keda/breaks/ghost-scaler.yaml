@@ -1,0 +1,21 @@
+# ghost: an external trigger pointed at a Service that does not exist, with a fallback of 2 replicas.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: ghost
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: ghost
+  pollingInterval: 5
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 4
+  fallback:
+    failureThreshold: 3
+    replicas: 2
+  triggers:
+    - type: external
+      metadata:
+        scalerAddress: nobody.demo:9090
+        target: "4"

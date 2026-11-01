@@ -1,0 +1,22 @@
+# rater scales on messages published a second, read from the http API: one replica for every 2 a second.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: rater
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: rater
+  pollingInterval: 5
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 6
+  triggers:
+    - type: rabbitmq
+      metadata:
+        protocol: http
+        queueName: rated
+        mode: MessageRate
+        value: "2"
+      authenticationRef:
+        name: rabbitmq-http

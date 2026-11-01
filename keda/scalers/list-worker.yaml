@@ -1,0 +1,21 @@
+# list-worker scales on the length of the Redis list "jobs": one replica for every 5 jobs waiting, up to 6.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: list-worker
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: list-worker
+  pollingInterval: 5
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 6
+  triggers:
+    - type: redis
+      metadata:
+        address: redis.redis:6379
+        listName: jobs
+        listLength: "5"
+      authenticationRef:
+        name: redis

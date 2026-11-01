@@ -1,0 +1,12 @@
+# The TriggerAuthentication every Redis trigger in demo uses: KEDA reads the scaler's "password"
+# parameter from the Secret lab-passwords, key redis. Nothing secret goes in a ScaledObject.
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: redis
+  namespace: demo
+spec:
+  secretTargetRef:
+    - parameter: password
+      name: lab-passwords
+      key: redis
