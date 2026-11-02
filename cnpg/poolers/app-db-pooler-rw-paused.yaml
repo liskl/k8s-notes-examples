@@ -1,0 +1,21 @@
+# Chapter 9: the same pooler, paused: PgBouncer holds every new query until it is resumed, so a switchover
+# behind it shows clients a wait, not an error.
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: app-db-pooler-rw
+  namespace: apps
+spec:
+  cluster:
+    name: app-db
+  type: rw
+  instances: 1
+  pgbouncer:
+    poolMode: transaction
+    paused: true
+  template:
+    spec:
+      containers:
+      - name: pgbouncer
+        image: "ghcr.io/cloudnative-pg/pgbouncer:1.25.2@sha256:\
+          b15c428057d1ffbc19fb70496911a5f1a47066dcc1315bf794f4e85ade29e2e5"

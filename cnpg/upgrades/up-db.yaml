@@ -1,0 +1,17 @@
+# Chapter 13: a small Cluster on PostgreSQL 17 from the book's catalog. supervised: a rolling update stops
+# before the primary, for a person to switch over.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: up-db
+  namespace: apps
+spec:
+  instances: 2
+  primaryUpdateStrategy: supervised
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    name: fg07-minimal-trixie
+    major: 17
+  storage:
+    size: 1Gi

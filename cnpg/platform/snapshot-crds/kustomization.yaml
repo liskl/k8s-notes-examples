@@ -1,0 +1,6 @@
+# The external-snapshotter v8.7.0 CRDs for VolumeSnapshots, as upstream ships them
+# (client/config/crd at the tag v8.7.0). Apply before snapshot-controller/ and csi-hostpath/.
+resources:
+- snapshot.storage.k8s.io_volumesnapshotclasses.yaml
+- snapshot.storage.k8s.io_volumesnapshotcontents.yaml
+- snapshot.storage.k8s.io_volumesnapshots.yaml

@@ -1,0 +1,64 @@
+# Chapter 10: a CA of the book's own, made by cert-manager, and app-db's server certificate signed by it: a
+# self-signed root, an Issuer that signs with it, and a Certificate with every name a client may use for the
+# Services (twelve). The label on the Secret makes the instances reload it when cert-manager renews it.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: selfsigned
+  namespace: apps
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: app-db-own-ca
+  namespace: apps
+spec:
+  isCA: true
+  commonName: app-db-own-ca
+  secretName: app-db-own-ca
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: selfsigned
+    kind: Issuer
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: app-db-own-ca
+  namespace: apps
+spec:
+  ca:
+    secretName: app-db-own-ca
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: app-db-server-own
+  namespace: apps
+spec:
+  secretName: app-db-server-own
+  secretTemplate:
+    labels:
+      cnpg.io/reload: "true"
+  usages:
+  - server auth
+  dnsNames:
+    - app-db-rw
+    - app-db-rw.apps
+    - app-db-rw.apps.svc
+    - app-db-rw.apps.svc.cluster.local
+    - app-db-ro
+    - app-db-ro.apps
+    - app-db-ro.apps.svc
+    - app-db-ro.apps.svc.cluster.local
+    - app-db-r
+    - app-db-r.apps
+    - app-db-r.apps.svc
+    - app-db-r.apps.svc.cluster.local
+  issuerRef:
+    name: app-db-own-ca
+    kind: Issuer

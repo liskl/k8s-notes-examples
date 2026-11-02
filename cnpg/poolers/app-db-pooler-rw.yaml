@@ -1,0 +1,21 @@
+# Chapter 9: PgBouncer in front of the primary, as the operator runs it: a Deployment and a Service of the
+# same name, app-db-pooler-rw. Transaction pooling: a server connection is a client's only for one
+# transaction. The PgBouncer image is pinned by digest (the operator's default is 1.25.2 by tag).
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: app-db-pooler-rw
+  namespace: apps
+spec:
+  cluster:
+    name: app-db
+  type: rw
+  instances: 1
+  pgbouncer:
+    poolMode: transaction
+  template:
+    spec:
+      containers:
+      - name: pgbouncer
+        image: "ghcr.io/cloudnative-pg/pgbouncer:1.25.2@sha256:\
+          b15c428057d1ffbc19fb70496911a5f1a47066dcc1315bf794f4e85ade29e2e5"

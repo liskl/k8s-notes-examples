@@ -1,0 +1,50 @@
+# Chapter 12: a point-in-time recovery from the online snapshots plus the WAL in the bucket: the volumes
+# start from the snapshots, then the WAL is replayed up to the target time below, a placeholder the page
+# fills in (in UTC). The snapshots are named after the Backup: <backup>, <backup>-wal and
+# <backup>-tbs-<tablespace>.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: snap-db-pitr
+  namespace: apps
+spec:
+  instances: 1
+  imageName: "ghcr.io/cloudnative-pg/postgresql:18.6-202610260820-minimal-trixie@sha256:\
+    64abc98a4387361afd6821a3a99f975763bbd87bbdde9449e75ad6002528a318"
+  storage:
+    size: 2Gi
+    storageClass: csi-hostpath-sc
+  walStorage:
+    size: 1Gi
+    storageClass: csi-hostpath-sc
+  tablespaces:
+  - name: archive
+    storage:
+      size: 1Gi
+      storageClass: csi-hostpath-sc
+  bootstrap:
+    recovery:
+      source: snap-db
+      volumeSnapshots:
+        storage:
+          name: snap-db-online
+          kind: VolumeSnapshot
+          apiGroup: snapshot.storage.k8s.io
+        walStorage:
+          name: snap-db-online-wal
+          kind: VolumeSnapshot
+          apiGroup: snapshot.storage.k8s.io
+        tablespaceStorage:
+          archive:
+            name: snap-db-online-tbs-archive
+            kind: VolumeSnapshot
+            apiGroup: snapshot.storage.k8s.io
+      recoveryTarget:
+        targetTime: "TARGET_TIME"
+  externalClusters:
+  - name: snap-db
+    plugin:
+      name: barman-cloud.cloudnative-pg.io
+      parameters:
+        barmanObjectName: rustfs
+        serverName: snap-db

@@ -1,0 +1,38 @@
+# Chapter 13: the second site, on the same lab: the namespace apps-dr (Pod Security restricted), the
+# lab-only RustFS keys again, and an ObjectStore of its own for the same bucket (the plugin reads the
+# ObjectStore from the Cluster's own namespace).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: apps-dr
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rustfs-keys
+  namespace: apps-dr
+stringData:
+  ACCESS_KEY_ID: lab-backups
+  ACCESS_SECRET_KEY: lab-backups-not-a-secret
+---
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: rustfs
+  namespace: apps-dr
+spec:
+  configuration:
+    destinationPath: s3://backups/
+    endpointURL: http://rustfs.rustfs:9000
+    s3Credentials:
+      accessKeyId:
+        name: rustfs-keys
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: rustfs-keys
+        key: ACCESS_SECRET_KEY
+    wal:
+      compression: gzip
+  retentionPolicy: "7d"

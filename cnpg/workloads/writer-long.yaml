@@ -1,0 +1,41 @@
+# The writer for 150 s, on lab-worker (the node the book never stops): for pages where a node is stopped or
+# several things happen in a row while it writes.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: writer
+  namespace: apps
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/hostname: lab-worker
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: writer
+        image: "ghcr.io/liskl/k8s-notes-examples/cnpg-demo:1.0.2@sha256:\
+          fba33206cb826be5f6692923f98ae37103c58ae3e6b8e963a33f2ee3b812e78b"
+        args: ["writer", "-every", "100ms", "-for", "150s"]
+        env:
+        - name: PGHOST
+          value: app-db-rw
+        - name: PGSSLMODE
+          value: require
+        - name: PGPORT
+          valueFrom: {secretKeyRef: {name: app-db-app, key: port}}
+        - name: PGUSER
+          valueFrom: {secretKeyRef: {name: app-db-app, key: username}}
+        - name: PGPASSWORD
+          valueFrom: {secretKeyRef: {name: app-db-app, key: password}}
+        - name: PGDATABASE
+          valueFrom: {secretKeyRef: {name: app-db-app, key: dbname}}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]

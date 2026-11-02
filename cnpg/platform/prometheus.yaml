@@ -1,0 +1,140 @@
+# Chapter 14: Prometheus v3.15.1 in the namespace monitoring (Pod Security restricted), as nobody (uid
+# 65534), keeping 2 hours of data in an emptyDir, on lab-worker (the node the book never stops). No
+# Prometheus Operator, so no PodMonitor: it finds what to scrape by listing Pods, every 15 s: each
+# CloudNativePG instance on its port named metrics (9187), each PgBouncer of a Pooler on its metrics port
+# (9127), and the operator (8080). The Roles let it list Pods in apps and cnpg-system, and nothing else. The
+# Pod's cluster label becomes cnpg_cluster: the exporter sets a label cluster of its own on some series.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: monitoring
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: prometheus-pods
+  namespace: apps
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prometheus-pods
+  namespace: apps
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: prometheus-pods}
+subjects: [{kind: ServiceAccount, name: prometheus, namespace: monitoring}]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: prometheus-pods
+  namespace: cnpg-system
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prometheus-pods
+  namespace: cnpg-system
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: prometheus-pods}
+subjects: [{kind: ServiceAccount, name: prometheus, namespace: monitoring}]
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus
+  namespace: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+    scrape_configs:
+      - job_name: cnpg-instances
+        kubernetes_sd_configs: [{role: pod, namespaces: {names: [apps]}}]
+        relabel_configs:
+          - {source_labels: [__meta_kubernetes_pod_label_cnpg_io_podRole], regex: instance, action: keep}
+          - {source_labels: [__meta_kubernetes_pod_container_port_name], regex: metrics, action: keep}
+          - {source_labels: [__meta_kubernetes_pod_label_cnpg_io_cluster], target_label: cnpg_cluster}
+          - {source_labels: [__meta_kubernetes_pod_label_cnpg_io_instanceRole], target_label: role}
+          - {source_labels: [__meta_kubernetes_pod_name], target_label: pod}
+      - job_name: cnpg-poolers
+        kubernetes_sd_configs: [{role: pod, namespaces: {names: [apps]}}]
+        relabel_configs:
+          - {source_labels: [__meta_kubernetes_pod_label_cnpg_io_poolerName], regex: .+, action: keep}
+          - {source_labels: [__meta_kubernetes_pod_container_port_name], regex: metrics, action: keep}
+          - {source_labels: [__meta_kubernetes_pod_label_cnpg_io_poolerName], target_label: pooler}
+          - {source_labels: [__meta_kubernetes_pod_name], target_label: pod}
+      - job_name: cnpg-operator
+        kubernetes_sd_configs: [{role: pod, namespaces: {names: [cnpg-system]}}]
+        relabel_configs:
+          - {source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name], regex: cloudnative-pg,
+             action: keep}
+          - {source_labels: [__meta_kubernetes_pod_container_port_number], regex: "8080", action: keep}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels: {app: prometheus}
+  template:
+    metadata:
+      labels: {app: prometheus}
+    spec:
+      serviceAccountName: prometheus
+      nodeSelector:
+        kubernetes.io/hostname: lab-worker
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: prometheus
+          image: "quay.io/prometheus/prometheus:v3.15.1@sha256:\
+            fa3302279710be2f21a8301ec17a8b4f2301fd829bd113839b3b6b02b6f191a2"
+          args:
+            - --config.file=/etc/prometheus/prometheus.yml
+            - --storage.tsdb.path=/prometheus
+            - --storage.tsdb.retention.time=2h
+          ports: [{containerPort: 9090}]
+          readinessProbe:
+            httpGet: {path: /-/ready, port: 9090}
+            periodSeconds: 5
+          resources:
+            requests: {cpu: 50m, memory: 128Mi}
+          volumeMounts:
+            - {name: config, mountPath: /etc/prometheus}
+            - {name: data, mountPath: /prometheus}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+      volumes:
+        - {name: config, configMap: {name: prometheus}}
+        - {name: data, emptyDir: {}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  selector: {app: prometheus}
+  ports: [{port: 9090}]

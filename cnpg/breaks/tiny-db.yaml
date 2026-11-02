@@ -1,0 +1,13 @@
+# Chapter 7, on purpose: a one-instance Cluster on the lab's default class, local-path, which cannot expand
+# a volume.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: tiny-db
+  namespace: apps
+spec:
+  instances: 1
+  imageName: "ghcr.io/cloudnative-pg/postgresql:18.6-202610260820-minimal-trixie@sha256:\
+    64abc98a4387361afd6821a3a99f975763bbd87bbdde9449e75ad6002528a318"
+  storage:
+    size: 1Gi

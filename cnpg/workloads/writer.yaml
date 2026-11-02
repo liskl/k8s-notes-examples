@@ -1,0 +1,40 @@
+# The book's writer (cnpg-demo writer): one numbered insert every 100 ms for 60 s through app-db-rw, through
+# any outage, then its check: the rows Postgres acknowledged that are not there. The run is named after the
+# Pod, so delete the Job and apply this file again for a new run.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: writer
+  namespace: apps
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: writer
+        image: "ghcr.io/liskl/k8s-notes-examples/cnpg-demo:1.0.2@sha256:\
+          fba33206cb826be5f6692923f98ae37103c58ae3e6b8e963a33f2ee3b812e78b"
+        args: ["writer", "-every", "100ms", "-for", "60s"]
+        env:
+        - name: PGHOST
+          value: app-db-rw
+        - name: PGSSLMODE
+          value: require
+        - name: PGPORT
+          valueFrom: {secretKeyRef: {name: app-db-app, key: port}}
+        - name: PGUSER
+          valueFrom: {secretKeyRef: {name: app-db-app, key: username}}
+        - name: PGPASSWORD
+          valueFrom: {secretKeyRef: {name: app-db-app, key: password}}
+        - name: PGDATABASE
+          valueFrom: {secretKeyRef: {name: app-db-app, key: dbname}}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]

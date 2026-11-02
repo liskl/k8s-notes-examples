@@ -1,0 +1,8 @@
+# The book's namespace for its clusters and the demo, under Pod Security restricted (CNPG's Pods pass it as
+# made).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: apps
+  labels:
+    pod-security.kubernetes.io/enforce: restricted

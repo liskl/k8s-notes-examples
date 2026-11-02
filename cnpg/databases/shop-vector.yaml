@@ -1,0 +1,18 @@
+# Chapter 8: shop again, with the extension vector (pgvector) in it: it needs the extension's files in the
+# image or mounted (clusters/app-db-ext.yaml).
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: app-db-shop
+  namespace: apps
+spec:
+  cluster:
+    name: app-db
+  name: shop
+  owner: app
+  schemas:
+  - name: orders
+    owner: app
+  extensions:
+  - name: vector
+    ensure: present

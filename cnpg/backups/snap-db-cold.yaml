@@ -1,0 +1,12 @@
+# Chapter 12: the same as a cold backup: the operator fences the instance it snapshots (it stops PostgreSQL
+# there), so the files on the volumes are at rest.
+apiVersion: postgresql.cnpg.io/v1
+kind: Backup
+metadata:
+  name: snap-db-cold
+  namespace: apps
+spec:
+  cluster:
+    name: snap-db
+  method: volumeSnapshot
+  online: false

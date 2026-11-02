@@ -1,0 +1,65 @@
+# Chapter 8: the reader again, as the role auditor, with no password: it proves who it is with the client
+# certificate the operator made (auditor-client-cert), and checks the server against the cluster's CA
+# (app-db-ca) with verify-full. The Secrets are mounted readable by the image's user (fsGroup 65532, mode
+# 0440).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: reader-cert
+  namespace: apps
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: reader
+        image: "ghcr.io/liskl/k8s-notes-examples/cnpg-demo:1.0.2@sha256:\
+          fba33206cb826be5f6692923f98ae37103c58ae3e6b8e963a33f2ee3b812e78b"
+        args: ["reader", "-every", "1s", "-for", "5s"]
+        env:
+        - name: PGHOST
+          value: app-db-rw
+        - name: PGHOST_RO
+          value: app-db-ro
+        - name: PGPORT
+          value: "5432"
+        - name: PGDATABASE
+          value: app
+        - name: PGUSER
+          value: auditor
+        - name: PGSSLMODE
+          value: verify-full
+        - name: PGSSLROOTCERT
+          value: /certs/ca/ca.crt
+        - name: PGSSLCERT
+          value: /certs/client/tls.crt
+        - name: PGSSLKEY
+          value: /certs/client/tls.key
+        volumeMounts:
+        - name: ca
+          mountPath: /certs/ca
+        - name: client
+          mountPath: /certs/client
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+      volumes:
+      - name: ca
+        secret:
+          secretName: app-db-ca
+          items:
+          - key: ca.crt
+            path: ca.crt
+          defaultMode: 0440
+      - name: client
+        secret:
+          secretName: auditor-client-cert
+          defaultMode: 0440

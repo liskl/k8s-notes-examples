@@ -1,0 +1,33 @@
+# Chapter 8: a pg_hba rule of the book's own, so the role auditor (a DatabaseRole) logs in with its client
+# certificate and nothing else. The operator adds it among its own rules.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: app-db
+  namespace: apps
+spec:
+  instances: 3
+  imageName: "ghcr.io/cloudnative-pg/postgresql:18.6-202610260820-minimal-trixie@sha256:\
+    64abc98a4387361afd6821a3a99f975763bbd87bbdde9449e75ad6002528a318"
+  smartShutdownTimeout: 0
+  storage:
+    size: 1Gi
+  postgresql:
+    parameters:
+      work_mem: "8MB"
+      max_connections: "150"
+    synchronous:
+      method: any
+      number: 1
+      dataDurability: required
+    pg_hba:
+    - hostssl app auditor all cert
+  managed:
+    roles:
+    - name: reporter
+      ensure: present
+      login: true
+      inRoles:
+      - pg_read_all_data
+      passwordSecret:
+        name: reporter-password

@@ -1,0 +1,39 @@
+# Chapter 13: the writer on the other site, in apps-dr, through app-db-dr-rw, with the app user's Secret
+# copied from apps (both sites keep the same app password).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: writer
+  namespace: apps-dr
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: writer
+        image: "ghcr.io/liskl/k8s-notes-examples/cnpg-demo:1.0.2@sha256:\
+          fba33206cb826be5f6692923f98ae37103c58ae3e6b8e963a33f2ee3b812e78b"
+        args: ["writer", "-every", "100ms", "-for", "60s"]
+        env:
+        - name: PGHOST
+          value: app-db-dr-rw
+        - name: PGSSLMODE
+          value: require
+        - name: PGPORT
+          valueFrom: {secretKeyRef: {name: app-db-app, key: port}}
+        - name: PGUSER
+          valueFrom: {secretKeyRef: {name: app-db-app, key: username}}
+        - name: PGPASSWORD
+          valueFrom: {secretKeyRef: {name: app-db-app, key: password}}
+        - name: PGDATABASE
+          valueFrom: {secretKeyRef: {name: app-db-app, key: dbname}}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]

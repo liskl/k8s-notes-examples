@@ -1,0 +1,22 @@
+# Chapter 14: a query of the book's own for the instances' exporter: how many rows the writer has left in
+# acks, and in how many runs. The exporter runs it as cnpg_metrics_exporter, which needs SELECT on the table
+# (a GRANT); the label makes the instances reload it when it changes.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-db-queries
+  namespace: apps
+  labels:
+    cnpg.io/reload: ""
+data:
+  queries: |
+    demo_acks:
+      query: "SELECT count(*) AS rows, count(DISTINCT run) AS runs FROM public.acks"
+      primary: true
+      metrics:
+        - rows:
+            usage: "GAUGE"
+            description: "rows the writer left"
+        - runs:
+            usage: "GAUGE"
+            description: "writer runs"
