@@ -1,0 +1,36 @@
+# Chapter 10: make the bucket "backups" in RustFS with a signed S3 PUT (curl's --aws-sigv4), with the keys
+# from the Secret rustfs. A Cluster created with the plugin gets its bucket from barman's first archive
+# check; app-db gets the plugin while it runs, which skips that check, so its archiving fails with
+# NoSuchBucket until this Job has run.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: make-bucket
+  namespace: rustfs
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 100
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: curl
+        image: "docker.io/curlimages/curl:8.23.0@sha256:\
+          3fb7e13e5d179a845c97d78204f3f1064d1907037f26a3ebf91710571151fd93"
+        command: ["sh", "-c"]
+        args:
+        - >-
+          curl -sS -o /dev/null -w 'PUT /backups: %{http_code}\n' --aws-sigv4 aws:amz:us-east-1:s3
+          --user "$ACCESS_KEY_ID:$ACCESS_SECRET_KEY" -X PUT http://rustfs.rustfs:9000/backups
+        envFrom:
+        - secretRef:
+            name: rustfs
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]

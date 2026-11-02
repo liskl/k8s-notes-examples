@@ -1,0 +1,6 @@
+# The snapshot controller from external-snapshotter v8.7.0 (deploy/kubernetes/snapshot-controller at the
+# tag), in kube-system. Changed from upstream: the image is v8.7.0 by digest (the tag's manifest names
+# v8.6.0).
+resources:
+- rbac-snapshot-controller.yaml
+- setup-snapshot-controller.yaml

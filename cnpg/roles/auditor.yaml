@@ -1,0 +1,17 @@
+# Chapter 8: a role as an object of its own (new in 1.30), next to the Cluster rather than in it.
+# clientCertificate asks the operator for a TLS client certificate, signed by the cluster's CA, in the
+# Secret auditor-client-cert.
+apiVersion: postgresql.cnpg.io/v1
+kind: DatabaseRole
+metadata:
+  name: auditor
+  namespace: apps
+spec:
+  cluster:
+    name: app-db
+  name: auditor
+  ensure: present
+  login: true
+  inRoles:
+  - pg_read_all_data
+  clientCertificate: {}

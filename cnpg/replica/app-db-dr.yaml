@@ -1,0 +1,75 @@
+# Chapter 13: a replica cluster of app-db, in apps-dr: first copied by pg_basebackup over the network, then
+# kept up by streaming from app-db-rw and by WAL from the bucket. Both sites list each other
+# (externalClusters) and say which one is the primary (replica.primary): this is the distributed topology,
+# where the primary role can move between them and back with no data lost. It archives its own WAL under its
+# own name, app-db-dr.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: app-db-dr
+  namespace: apps-dr
+spec:
+  instances: 2
+  imageName: "ghcr.io/cloudnative-pg/postgresql:18.6-202610260820-minimal-trixie@sha256:\
+    64abc98a4387361afd6821a3a99f975763bbd87bbdde9449e75ad6002528a318"
+  storage:
+    size: 1Gi
+  postgresql:
+    parameters:
+      # a standby needs it at least as high as its primary has it (app-db's is 150, since chapter 3)
+      max_connections: "150"
+  bootstrap:
+    pg_basebackup:
+      source: app-db
+      secret:
+        name: app-db-app
+  replica:
+    primary: app-db
+    source: app-db
+  plugins:
+  - name: barman-cloud.cloudnative-pg.io
+    isWALArchiver: true
+    parameters:
+      barmanObjectName: rustfs
+  externalClusters:
+  - name: app-db
+    connectionParameters:
+      host: app-db-rw.apps.svc
+      user: streaming_replica
+      sslmode: verify-full
+      dbname: postgres
+    sslKey:
+      name: app-db-replication
+      key: tls.key
+    sslCert:
+      name: app-db-replication
+      key: tls.crt
+    # app-db's server certificate is signed by the book's own CA since chapter 10
+    sslRootCert:
+      name: app-db-own-ca
+      key: ca.crt
+    plugin:
+      name: barman-cloud.cloudnative-pg.io
+      parameters:
+        barmanObjectName: rustfs
+        serverName: app-db
+  - name: app-db-dr
+    connectionParameters:
+      host: app-db-dr-rw.apps-dr.svc
+      user: streaming_replica
+      sslmode: verify-full
+      dbname: postgres
+    sslKey:
+      name: app-db-dr-replication
+      key: tls.key
+    sslCert:
+      name: app-db-dr-replication
+      key: tls.crt
+    sslRootCert:
+      name: app-db-dr-ca
+      key: ca.crt
+    plugin:
+      name: barman-cloud.cloudnative-pg.io
+      parameters:
+        barmanObjectName: rustfs
+        serverName: app-db-dr

@@ -1,0 +1,82 @@
+# Chapter 2 on: the book's web app (cnpg-demo web), behind No. 00's Gateway at the door, Host
+# demo.localhost. GET / says which instance answered and whether it is the primary; GET /ro asks through
+# app-db-ro. Every request opens a new connection, so the answers follow the Services. The settings come one
+# by one from the Secret app-db-app (never its uri): libpq's PG* variables.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+  namespace: apps
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: web
+        image: "ghcr.io/liskl/k8s-notes-examples/cnpg-demo:1.0.2@sha256:\
+          fba33206cb826be5f6692923f98ae37103c58ae3e6b8e963a33f2ee3b812e78b"
+        args: ["web"]
+        ports:
+        - name: http
+          containerPort: 8080
+        env:
+        - name: PGHOST_RO
+          value: app-db-ro
+        - name: PGHOST
+          value: app-db-rw
+        - name: PGSSLMODE
+          value: require
+        - name: PGPORT
+          valueFrom: {secretKeyRef: {name: app-db-app, key: port}}
+        - name: PGUSER
+          valueFrom: {secretKeyRef: {name: app-db-app, key: username}}
+        - name: PGPASSWORD
+          valueFrom: {secretKeyRef: {name: app-db-app, key: password}}
+        - name: PGDATABASE
+          valueFrom: {secretKeyRef: {name: app-db-app, key: dbname}}
+        readinessProbe:
+          httpGet: {path: /healthz, port: http}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo
+  namespace: apps
+spec:
+  selector:
+    app: demo
+  ports:
+  - name: http
+    port: 8080
+    targetPort: http
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: demo
+  namespace: apps
+spec:
+  parentRefs:
+  - name: http
+    namespace: kgateway-system
+  hostnames:
+  - demo.localhost
+  rules:
+  - backendRefs:
+    - name: demo
+      port: 8080

@@ -1,0 +1,17 @@
+# Chapter 10: a base backup of app-db now (immediate) and every 5 minutes. The schedule has six fields,
+# seconds first. The Backups it makes belong to this ScheduledBackup (backupOwnerReference self), so
+# deleting it deletes them (the objects, not the files in the bucket).
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: app-db-every-5m
+  namespace: apps
+spec:
+  schedule: "0 */5 * * * *"
+  backupOwnerReference: self
+  immediate: true
+  cluster:
+    name: app-db
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io

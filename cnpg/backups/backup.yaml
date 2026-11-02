@@ -1,0 +1,13 @@
+# Chapter 10: one base backup of app-db through the plugin. method: plugin is needed: without it a Backup
+# gets the default method, barmanObjectStore, the in-tree one this book does not use.
+apiVersion: postgresql.cnpg.io/v1
+kind: Backup
+metadata:
+  name: app-db-first
+  namespace: apps
+spec:
+  cluster:
+    name: app-db
+  method: plugin
+  pluginConfiguration:
+    name: barman-cloud.cloudnative-pg.io

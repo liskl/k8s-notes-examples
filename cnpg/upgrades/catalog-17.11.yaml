@@ -1,0 +1,13 @@
+# Chapter 13: the catalog with a newer 17 build (17.11). Every Cluster on major 17 of this catalog updates.
+apiVersion: postgresql.cnpg.io/v1
+kind: ClusterImageCatalog
+metadata:
+  name: fg07-minimal-trixie
+spec:
+  images:
+  - major: 17
+    image: "ghcr.io/cloudnative-pg/postgresql:17.11-202610260819-minimal-trixie@sha256:\
+      87f97b9a922e469b91faaaa36ced7c2092cf890efd3622f29095d252b70b9718"
+  - major: 18
+    image: "ghcr.io/cloudnative-pg/postgresql:18.6-202610260820-minimal-trixie@sha256:\
+      64abc98a4387361afd6821a3a99f975763bbd87bbdde9449e75ad6002528a318"

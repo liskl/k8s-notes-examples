@@ -1,0 +1,23 @@
+# Chapter 10: where the Barman Cloud Plugin puts WAL and base backups: the bucket backups in the lab's
+# RustFS, at its root (RustFS up to 1.0.4 breaks barman's listing when a folder ends in a slash). Each
+# Cluster writes under its own server name, s3://backups/<server name>/. Base backups older than the
+# recovery window of 7 days are deleted (the plugin checks every 30 minutes).
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: rustfs
+  namespace: apps
+spec:
+  configuration:
+    destinationPath: s3://backups/
+    endpointURL: http://rustfs.rustfs:9000
+    s3Credentials:
+      accessKeyId:
+        name: rustfs-keys
+        key: ACCESS_KEY_ID
+      secretAccessKey:
+        name: rustfs-keys
+        key: ACCESS_SECRET_KEY
+    wal:
+      compression: gzip
+  retentionPolicy: "7d"

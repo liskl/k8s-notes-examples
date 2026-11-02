@@ -1,0 +1,55 @@
+# Chapter 10: the reader as the app user, checking the server against the book's own CA (app-db-own-ca) with
+# verify-full.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: reader-own-ca
+  namespace: apps
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: reader
+        image: "ghcr.io/liskl/k8s-notes-examples/cnpg-demo:1.0.2@sha256:\
+          fba33206cb826be5f6692923f98ae37103c58ae3e6b8e963a33f2ee3b812e78b"
+        args: ["reader", "-every", "1s", "-for", "5s"]
+        env:
+        - name: PGHOST
+          value: app-db-rw
+        - name: PGHOST_RO
+          value: app-db-ro
+        - name: PGPORT
+          value: "5432"
+        - name: PGDATABASE
+          value: app
+        - name: PGUSER
+          valueFrom: {secretKeyRef: {name: app-db-app, key: username}}
+        - name: PGPASSWORD
+          valueFrom: {secretKeyRef: {name: app-db-app, key: password}}
+        - name: PGSSLMODE
+          value: verify-full
+        - name: PGSSLROOTCERT
+          value: /certs/ca/ca.crt
+        volumeMounts:
+        - name: ca
+          mountPath: /certs/ca
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+      volumes:
+      - name: ca
+        secret:
+          secretName: app-db-own-ca
+          items:
+          - key: ca.crt
+            path: ca.crt
+          defaultMode: 0440

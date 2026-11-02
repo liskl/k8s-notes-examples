@@ -1,0 +1,14 @@
+# Chapter 8: a database as an object: shop, owned by app, with a schema orders.
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: app-db-shop
+  namespace: apps
+spec:
+  cluster:
+    name: app-db
+  name: shop
+  owner: app
+  schemas:
+  - name: orders
+    owner: app

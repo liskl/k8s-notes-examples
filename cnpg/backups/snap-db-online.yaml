@@ -1,0 +1,11 @@
+# Chapter 12: a backup of snap-db as volume snapshots, taken while it runs (online, the default): one
+# VolumeSnapshot for each of the instance's claims, data, WAL and the tablespace, from a replica.
+apiVersion: postgresql.cnpg.io/v1
+kind: Backup
+metadata:
+  name: snap-db-online
+  namespace: apps
+spec:
+  cluster:
+    name: snap-db
+  method: volumeSnapshot

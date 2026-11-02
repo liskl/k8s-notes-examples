@@ -1,0 +1,10 @@
+# The lab-only RustFS keys again, in the namespace of the clusters that archive: the plugin's sidecar reads
+# its ObjectStore and the ObjectStore's Secret from the Cluster's own namespace.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rustfs-keys
+  namespace: apps
+stringData:
+  ACCESS_KEY_ID: lab-backups
+  ACCESS_SECRET_KEY: lab-backups-not-a-secret

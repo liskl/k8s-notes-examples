@@ -1,0 +1,11 @@
+# Chapter 2: the first Cluster, three instances, nothing else set. The operator picks the image (its
+# default), the storage class (the lab's default, local-path) and everything the book changes later.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: app-db
+  namespace: apps
+spec:
+  instances: 3
+  storage:
+    size: 1Gi

@@ -1,0 +1,130 @@
+# Field Guide 07: RustFS 1.0.4, the lab's S3 object store for backups and WAL (the Barman Cloud Plugin's own
+# e2e tests use it). One Pod on lab-worker, which the book never stops or drains (No. 00's door is there
+# too), with a local-path volume. The keys are lab-only strings published with the book: use them nowhere
+# else.
+#
+# RUSTFS_VOLUMES is the volume's mount itself: the command below skips the image's entrypoint, which would
+# make a sub-folder first, and RustFS stops with "Volume not found" when its folder does not exist.
+# runAsUser is set because the image names its user (rustfs) and the kubelet cannot check a name against
+# runAsNonRoot.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rustfs
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rustfs
+  namespace: rustfs
+stringData:
+  ACCESS_KEY_ID: lab-backups
+  ACCESS_SECRET_KEY: lab-backups-not-a-secret
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rustfs
+  namespace: rustfs
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 4Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rustfs
+  namespace: rustfs
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: rustfs
+  template:
+    metadata:
+      labels:
+        app: rustfs
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: lab-worker
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: rustfs
+        image: "docker.io/rustfs/rustfs:1.0.4-glibc@sha256:\
+          a9b705b9256be756802a60f3498abdc543918b5b5a4437a57a541e89e733c74d"
+        command: ["/usr/bin/rustfs"]
+        ports:
+        - name: s3
+          containerPort: 9000
+        env:
+        - name: RUSTFS_ADDRESS
+          value: ":9000"
+        - name: RUSTFS_VOLUMES
+          value: /data
+        - name: RUSTFS_REGION
+          value: us-east-1
+        - name: RUSTFS_CONSOLE_ENABLE
+          value: "false"
+        - name: RUSTFS_OBS_LOG_DIRECTORY
+          value: /logs
+        - name: RUSTFS_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: rustfs
+              key: ACCESS_KEY_ID
+        - name: RUSTFS_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: rustfs
+              key: ACCESS_SECRET_KEY
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 9000
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 9000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: logs
+          mountPath: /logs
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: rustfs
+      - name: logs
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rustfs
+  namespace: rustfs
+spec:
+  selector:
+    app: rustfs
+  ports:
+  - name: s3
+    port: 9000
+    targetPort: s3

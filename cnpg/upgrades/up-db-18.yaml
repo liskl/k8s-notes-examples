@@ -1,0 +1,17 @@
+# Chapter 13: up-db asks for major 18: an offline upgrade in place (pg_upgrade --link in a Job), the replica
+# made again from the new primary.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: up-db
+  namespace: apps
+spec:
+  instances: 2
+  primaryUpdateStrategy: supervised
+  imageCatalogRef:
+    apiGroup: postgresql.cnpg.io
+    kind: ClusterImageCatalog
+    name: fg07-minimal-trixie
+    major: 18
+  storage:
+    size: 1Gi

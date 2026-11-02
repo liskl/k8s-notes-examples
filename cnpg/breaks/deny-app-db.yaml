@@ -1,0 +1,14 @@
+# Chapter 14, on purpose: a NetworkPolicy that lets nothing in to app-db's instances, written without the
+# two things CloudNativePG needs: the operator reaching each instance's status port (8000) and the instances
+# reaching each other on 5432. Connections already open go on; anything new times out.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: app-db-deny-ingress
+  namespace: apps
+spec:
+  podSelector:
+    matchLabels:
+      cnpg.io/cluster: app-db
+  policyTypes:
+  - Ingress

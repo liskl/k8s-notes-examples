@@ -1,0 +1,42 @@
+# The book's reader (cnpg-demo reader): every second for 60 s, a new connection through app-db-ro, and what
+# the replica that answered has of the newest writer run, with how long ago it replayed its last
+# transaction.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: reader
+  namespace: apps
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: reader
+        image: "ghcr.io/liskl/k8s-notes-examples/cnpg-demo:1.0.2@sha256:\
+          fba33206cb826be5f6692923f98ae37103c58ae3e6b8e963a33f2ee3b812e78b"
+        args: ["reader", "-every", "1s", "-for", "60s"]
+        env:
+        - name: PGHOST
+          value: app-db-rw
+        - name: PGHOST_RO
+          value: app-db-ro
+        - name: PGSSLMODE
+          value: require
+        - name: PGPORT
+          valueFrom: {secretKeyRef: {name: app-db-app, key: port}}
+        - name: PGUSER
+          valueFrom: {secretKeyRef: {name: app-db-app, key: username}}
+        - name: PGPASSWORD
+          valueFrom: {secretKeyRef: {name: app-db-app, key: password}}
+        - name: PGDATABASE
+          valueFrom: {secretKeyRef: {name: app-db-app, key: dbname}}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]

@@ -1,0 +1,9 @@
+# Field Guide 07: the Barman Cloud Plugin chart 0.8.1 (appVersion v0.15.1), both images pinned by digest:
+# the plugin's own Deployment, and the sidecar it adds to every instance of a Cluster that uses it. The
+# plugin runs on lab-worker beside the operator, for the same reason (values/cnpg.yaml).
+image:
+  tag: "v0.15.1@sha256:c75acad19a36e8176cfe2885761ff1b836c6ef977d7257e298c99a28b5c302ef"
+sidecarImage:
+  tag: "v0.15.1@sha256:2287a793a804db751edd0d07d44cd549e357677e98a800eb12e2cf7c0d53f9b0"
+nodeSelector:
+  kubernetes.io/hostname: lab-worker
