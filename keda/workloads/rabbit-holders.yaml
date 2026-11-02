@@ -1,0 +1,31 @@
+# holders: four workers that each take one message from "held" and sit on it, unacknowledged, for 10 minutes.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: holders
+  namespace: demo
+spec:
+  replicas: 4
+  selector:
+    matchLabels: {app: holders}
+  template:
+    metadata:
+      labels: {app: holders}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: app
+          image: "ghcr.io/liskl/k8s-notes-examples/keda-demo:1.0.0@sha256:\
+            60fb369efffd8229e6f406d1010d5a09caa680668b182edc2bae1ed868868fe6"
+          args: ["rabbit-work", "-queue", "held", "-each", "10m"]
+          env:
+            - name: RABBITMQ_PASSWORD
+              valueFrom: {secretKeyRef: {name: lab-passwords, key: rabbitmq}}
+            - {name: RABBITMQ_URL, value: "amqp://lab:$(RABBITMQ_PASSWORD)@rabbitmq.rabbitmq:5672/"}
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}

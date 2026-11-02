@@ -1,0 +1,16 @@
+# Breaks a webhook rule: a cpu trigger on a container with no cpu request (nothing to take 50% of).
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: bare
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: bare
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  triggers:
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: "50"

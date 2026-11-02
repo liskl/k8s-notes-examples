@@ -1,0 +1,19 @@
+# The same query with a typo in the metric name: it matches no series at all.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: reporter
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: reporter
+  pollingInterval: 5
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 6
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus.monitoring:9090
+        query: sum(demo_backlogg)
+        threshold: "5"

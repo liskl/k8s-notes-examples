@@ -1,0 +1,23 @@
+# A ClusterTriggerAuthentication: one set of credentials any namespace's ScaledObjects may use. KEDA reads its
+# Secret from KEDA's own namespace, keda.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rabbitmq-shared
+  namespace: keda
+stringData:
+  username: lab
+  password: lab-only-rabbit
+---
+apiVersion: keda.sh/v1alpha1
+kind: ClusterTriggerAuthentication
+metadata:
+  name: rabbitmq-shared
+spec:
+  secretTargetRef:
+    - parameter: username
+      name: rabbitmq-shared
+      key: username
+    - parameter: password
+      name: rabbitmq-shared
+      key: password

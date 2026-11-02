@@ -1,0 +1,16 @@
+# The identity KEDA uses for the metrics-api scaler: a ServiceAccount, and a TriggerAuthentication that makes
+# KEDA mint a short-lived token for it (boundServiceAccountToken) and send it as the bearer token. It has no
+# audience field: in KEDA 2.21 the audience is set in KEDA's own Helm values.
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: metrics-reader, namespace: demo}
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: metrics-reader
+  namespace: demo
+spec:
+  boundServiceAccountToken:
+    - parameter: token
+      serviceAccountName: metrics-reader

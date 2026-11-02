@@ -1,0 +1,21 @@
+# list-worker that never goes below one replica, with pollingInterval and cooldownPeriod still written.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: list-worker
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: list-worker
+  pollingInterval: 5
+  cooldownPeriod: 30
+  minReplicaCount: 1
+  maxReplicaCount: 6
+  triggers:
+    - type: redis
+      metadata:
+        address: redis.redis:6379
+        listName: jobs
+        listLength: "5"
+      authenticationRef:
+        name: redis

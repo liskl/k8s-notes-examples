@@ -1,0 +1,16 @@
+# One TriggerAuthentication for RabbitMQ: the user and the password from lab-passwords, each a parameter of its
+# own. Each trigger names its address in host (amqp:// on port 5672, or the management plugin's http:// on
+# 15672) with no credentials in it; KEDA adds them, so a password never sits inside a URL.
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: rabbitmq
+  namespace: demo
+spec:
+  secretTargetRef:
+    - parameter: username
+      name: lab-passwords
+      key: rabbitmq-user
+    - parameter: password
+      name: lab-passwords
+      key: rabbitmq

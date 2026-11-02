@@ -1,0 +1,20 @@
+# A target that does not exist, with a long name: the failure message is longer than an Event may be.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: renamed
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: list-worker-that-was-renamed-last-week-and-nobody-told-keda
+  pollingInterval: 5
+  minReplicaCount: 0
+  maxReplicaCount: 3
+  triggers:
+    - type: redis
+      metadata:
+        address: redis.redis:6379
+        listName: checks
+        listLength: "5"
+      authenticationRef:
+        name: redis

@@ -1,0 +1,36 @@
+# pair scales on one number made from two triggers: the average of the lists "left" and "right". It wakes
+# only when that average is above 2 (activationTarget), then targets 5 a replica.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: pair
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: pair
+  pollingInterval: 5
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 6
+  advanced:
+    scalingModifiers:
+      formula: "(left + right) / 2"
+      target: "5"
+      activationTarget: "2"
+  triggers:
+    - type: redis
+      name: left
+      metadata:
+        address: redis.redis:6379
+        listName: left
+        listLength: "5"
+      authenticationRef:
+        name: redis
+    - type: redis
+      name: right
+      metadata:
+        address: redis.redis:6379
+        listName: right
+        listLength: "5"
+      authenticationRef:
+        name: redis

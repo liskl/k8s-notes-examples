@@ -1,0 +1,22 @@
+# api-worker scales on the JSON field "backlog" from values, one replica for every 5, sending the token.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: api-worker
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: api-worker
+  pollingInterval: 5
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 6
+  triggers:
+    - type: metrics-api
+      metadata:
+        url: http://values.demo:8080/value
+        valueLocation: backlog
+        targetValue: "5"
+        authMode: bearer
+      authenticationRef:
+        name: metrics-reader

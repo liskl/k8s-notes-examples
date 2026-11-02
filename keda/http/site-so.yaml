@@ -1,0 +1,17 @@
+# site's ScaledObject alone, for the wrong order (before its InterceptorRoute).
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: site
+  namespace: web
+spec:
+  scaleTargetRef:
+    name: site
+  minReplicaCount: 0
+  maxReplicaCount: 5
+  cooldownPeriod: 30
+  triggers:
+    - type: external-push
+      metadata:
+        scalerAddress: keda-add-ons-http-external-scaler.keda:9090
+        interceptorRoute: site

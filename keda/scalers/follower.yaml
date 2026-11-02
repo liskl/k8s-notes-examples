@@ -1,0 +1,18 @@
+# follower scales on how many Pods match app=burner in its namespace: one replica for each.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: follower
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: follower
+  pollingInterval: 5
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 10
+  triggers:
+    - type: kubernetes-workload
+      metadata:
+        podSelector: app=burner
+        value: "1"

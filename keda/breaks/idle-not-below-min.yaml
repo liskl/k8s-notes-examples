@@ -1,0 +1,19 @@
+# Breaks a webhook rule: the idle count must be below the minimum.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: idle
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: sized
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  idleReplicaCount: 2
+  triggers:
+    - type: cron
+      metadata:
+        timezone: UTC
+        start: "0 0 1 1 *"
+        end: "1 0 1 1 *"
+        desiredReplicas: "2"

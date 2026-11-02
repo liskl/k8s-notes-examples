@@ -1,0 +1,12 @@
+# The PostgreSQL scaler's password, from lab-passwords. The host, port, user, database and sslmode go in each
+# trigger's metadata: nothing in them is secret, and no password sits inside a connection string.
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: postgres
+  namespace: demo
+spec:
+  secretTargetRef:
+    - parameter: password
+      name: lab-passwords
+      key: postgres

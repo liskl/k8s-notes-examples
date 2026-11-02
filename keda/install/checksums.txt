@@ -1,0 +1,3 @@
+a7da56bf41a33dad9d2fc82a6fdecee552fff947d80bf1e1dbcf4db0f9e26dee  keda-2.21.0.tgz
+363f7250851f948661f7301c7e3bcb33c2cf19f4e26e2247f71ae61d339abe82  keda-add-ons-http-0.16.0.tgz
+3c7f57cdbee0f57fb0259a150e8f6d6cb4f29d72d1aa5dce8803151dd6d4c2a1  components.yaml
