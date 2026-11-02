@@ -6,12 +6,14 @@
 //	                                  PGHOST_RO (the -ro Service). POST /write adds a row, GET /count counts
 //	                                  them, GET /healthz answers without Postgres. Every request opens a new
 //	                                  connection, so the answers follow the Services as they change.
-//	writer -run R -every D -for D     one numbered insert every D for D, through every outage: after an error
+//	writer [-run R] -every D -for D   one numbered insert every D for D, through every outage: after an error
 //	       [-commit M] [-timeout D]   it reconnects and sends the same row again, until Postgres answers. A
 //	                                  row is acknowledged when Postgres said yes. At the end it reads the
-//	                                  table back and counts the acknowledged rows that are missing.
-//	reader -run R -every D -for D     one line every D through PGHOST_RO: which instance answered, the run's
-//	                                  rows and last row there, and how far its replay is behind.
+//	                                  table back and counts the acknowledged rows that are missing. The run's
+//	                                  name is -run, or the host name (in a Pod, the Pod's name).
+//	reader [-run R] -every D -for D   one line every D through PGHOST_RO: which instance answered, the run's
+//	                                  rows and last row there, and how far its replay is behind. Without
+//	                                  -run it follows the newest run in the table.
 //	version
 //
 // Connection settings come from libpq's environment variables (PGHOST, PGPORT, PGUSER, PGPASSWORD,
@@ -230,7 +232,7 @@ const acksTable = `CREATE TABLE IF NOT EXISTS acks
 // row is not there later. At the end it reads the table back through a fresh connection.
 func writer(ctx context.Context, args []string) error {
 	fs := flag.NewFlagSet("writer", flag.ExitOnError)
-	run := fs.String("run", "", "a name for this run, to tell its rows apart (required)")
+	run := fs.String("run", "", "a name for this run, to tell its rows apart (default: the host name)")
 	every := fs.Duration("every", 100*time.Millisecond, "time between inserts")
 	dur := fs.Duration("for", time.Minute, "how long to write")
 	commit := fs.String("commit", "", "synchronous_commit for the session (off, local, on, remote_apply); empty keeps the server's")
@@ -238,7 +240,11 @@ func writer(ctx context.Context, args []string) error {
 	report := fs.Duration("report", 5*time.Second, "time between progress lines")
 	fs.Parse(args)
 	if *run == "" {
-		return errors.New("writer: -run is required")
+		h, err := os.Hostname()
+		if err != nil {
+			return fmt.Errorf("writer: no -run and no host name: %w", err)
+		}
+		*run = h
 	}
 
 	open := func(c context.Context) (*pgx.Conn, error) {
@@ -418,17 +424,15 @@ func spans(ids []int64) string {
 // (pg_last_xact_replay_timestamp; "primary" when the instance is not in recovery).
 func reader(ctx context.Context, args []string) error {
 	fs := flag.NewFlagSet("reader", flag.ExitOnError)
-	run := fs.String("run", "", "the writer's run to follow (required)")
+	run := fs.String("run", "", "the writer's run to follow (default: the newest run in the table)")
 	every := fs.Duration("every", time.Second, "time between lines")
 	dur := fs.Duration("for", time.Minute, "how long to read")
 	fs.Parse(args)
-	if *run == "" {
-		return errors.New("reader: -run is required")
-	}
 	host := or(os.Getenv("PGHOST_RO"), os.Getenv("PGHOST"))
 	start := time.Now()
 	since := func() string { return fmt.Sprintf("%5.1fs", time.Since(start).Seconds()) }
-	log.Printf("%s reader %s: %s", since(), *run, target(host))
+	log.Printf("%s reader: %s", since(), target(host))
+	following := ""
 	tick := time.NewTicker(*every)
 	defer tick.Stop()
 	for end := start.Add(*dur); time.Now().Before(end) && ctx.Err() == nil; {
@@ -448,10 +452,20 @@ func reader(ctx context.Context, args []string) error {
 		var replica bool
 		var rows, last int64
 		var delay *float64
+		// The run: -run, or the run of the newest row this instance has.
+		r := *run
 		err = conn.QueryRow(c, `SELECT host(inet_server_addr()), pg_is_in_recovery(),
-			(SELECT count(*) FROM acks WHERE run = $1), (SELECT coalesce(max(id), 0) FROM acks WHERE run = $1),
-			extract(epoch FROM now() - pg_last_xact_replay_timestamp())::float8`, *run).
-			Scan(&addr, &replica, &rows, &last, &delay)
+			extract(epoch FROM now() - pg_last_xact_replay_timestamp())::float8`).Scan(&addr, &replica, &delay)
+		if err == nil && r == "" {
+			err = conn.QueryRow(c, "SELECT coalesce((SELECT run FROM acks ORDER BY at DESC LIMIT 1), '')").Scan(&r)
+		}
+		if err == nil && r != following && r != "" {
+			following = r
+			log.Printf("%s following run %s", since(), r)
+		}
+		if err == nil {
+			err = conn.QueryRow(c, "SELECT count(*), coalesce(max(id), 0) FROM acks WHERE run = $1", r).Scan(&rows, &last)
+		}
 		cancel()
 		conn.Close(context.Background())
 		var pe *pgconn.PgError
