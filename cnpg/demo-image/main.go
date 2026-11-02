@@ -225,7 +225,7 @@ const acksTable = `CREATE TABLE IF NOT EXISTS acks
 
 // writer inserts rows numbered 1, 2, 3 ... into acks, one every -every, and keeps going through outages.
 // After an error (the insert failed or timed out, so it may or may not have committed) it reconnects and
-// sends the same row again, with ON CONFLICT DO NOTHING, until Postgres answers. So a row counts as
+// sends the same row again, as an upsert, until Postgres answers. So a row counts as
 // acknowledged only once Postgres said yes to it, and "lost" means one thing: Postgres said yes, and the
 // row is not there later. At the end it reads the table back through a fresh connection.
 func writer(ctx context.Context, args []string) error {
@@ -302,8 +302,12 @@ func writer(ctx context.Context, args []string) error {
 			}
 			conn = c
 		}
+		// A resend must write too: a commit that timed out waiting for a synchronous standby has already
+		// committed locally, and an insert that did nothing would write no WAL, wait for no standby, and
+		// so be acknowledged without ever being replicated.
 		c, cancel := context.WithTimeout(ctx, *timeout)
-		_, err := conn.Exec(c, "INSERT INTO acks (run, id) VALUES ($1, $2) ON CONFLICT DO NOTHING", *run, next)
+		_, err := conn.Exec(c, `INSERT INTO acks (run, id) VALUES ($1, $2)
+			ON CONFLICT (run, id) DO UPDATE SET at = excluded.at`, *run, next)
 		cancel()
 		if err != nil {
 			failed(err)
