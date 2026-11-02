@@ -1,0 +1,23 @@
+# The PostgreSQL scaler's "connection" parameter, a whole connection string from lab-passwords, and a second
+# TriggerAuthentication whose string names a host that does not exist.
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: postgres
+  namespace: demo
+spec:
+  secretTargetRef:
+    - parameter: connection
+      name: lab-passwords
+      key: postgres-connection
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: postgres-bad
+  namespace: demo
+spec:
+  secretTargetRef:
+    - parameter: connection
+      name: lab-passwords
+      key: postgres-bad-connection

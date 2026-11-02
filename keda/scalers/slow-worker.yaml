@@ -1,0 +1,21 @@
+# slow-worker wakes for a single job (listLength 1) and goes back to zero 30 s after the list is empty.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: slow-worker
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: slow-worker
+  pollingInterval: 5
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 6
+  triggers:
+    - type: redis
+      metadata:
+        address: redis.redis:6379
+        listName: slow
+        listLength: "1"
+      authenticationRef:
+        name: redis

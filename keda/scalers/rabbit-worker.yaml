@@ -1,0 +1,22 @@
+# rabbit-worker scales on the length of "tasks" over AMQP: one replica for every 5 messages.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: rabbit-worker
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: rabbit-worker
+  pollingInterval: 5
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 6
+  triggers:
+    - type: rabbitmq
+      metadata:
+        protocol: amqp
+        queueName: tasks
+        mode: QueueLength
+        value: "5"
+      authenticationRef:
+        name: rabbitmq

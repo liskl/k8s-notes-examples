@@ -1,0 +1,18 @@
+# A ScaledObject for adopted, with no word about its existing HPA.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: adopted
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: adopted
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  triggers:
+    - type: cron
+      metadata:
+        timezone: UTC
+        start: "0 0 1 1 *"
+        end: "1 0 1 1 *"
+        desiredReplicas: "2"

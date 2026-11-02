@@ -1,0 +1,2 @@
+NAME MIN MAX READY ACTIVE FALLBACK PAUSED TRIGGERS
+.metadata.name .spec.minReplicaCount .spec.maxReplicaCount .status.conditions[?(@.type=="Ready")].status .status.conditions[?(@.type=="Active")].status .status.conditions[?(@.type=="Fallback")].status .status.conditions[?(@.type=="Paused")].status .status.triggersTypes

@@ -1,0 +1,30 @@
+# A ScaledObject on a ConfigMap: it exists, but a ConfigMap has no /scale subresource.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lab-notes
+  namespace: demo
+data:
+  note: a ConfigMap cannot be scaled
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: noscale
+  namespace: demo
+spec:
+  scaleTargetRef:
+    apiVersion: v1
+    kind: ConfigMap
+    name: lab-notes
+  pollingInterval: 5
+  minReplicaCount: 0
+  maxReplicaCount: 3
+  triggers:
+    - type: redis
+      metadata:
+        address: redis.redis:6379
+        listName: checks
+        listLength: "5"
+      authenticationRef:
+        name: redis

@@ -1,0 +1,22 @@
+# MessageRate over AMQP: the rate comes from the http API only, so this trigger cannot be built.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: rater
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: rater
+  pollingInterval: 5
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 6
+  triggers:
+    - type: rabbitmq
+      metadata:
+        protocol: amqp
+        queueName: rated
+        mode: MessageRate
+        value: "2"
+      authenticationRef:
+        name: rabbitmq

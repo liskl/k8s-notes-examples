@@ -1,0 +1,23 @@
+# The same ScaledObject taking over the existing HPA: the annotation, and the HPA named in advanced.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: adopted
+  namespace: demo
+  annotations:
+    scaledobject.keda.sh/transfer-hpa-ownership: "true"
+spec:
+  scaleTargetRef:
+    name: adopted
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  advanced:
+    horizontalPodAutoscalerConfig:
+      name: legacy
+  triggers:
+    - type: cron
+      metadata:
+        timezone: UTC
+        start: "0 0 1 1 *"
+        end: "1 0 1 1 *"
+        desiredReplicas: "2"

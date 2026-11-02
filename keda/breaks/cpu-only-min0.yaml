@@ -1,0 +1,16 @@
+# Breaks a webhook rule: only a cpu trigger, and minReplicaCount 0 (cpu use cannot wake a workload at 0).
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: alone
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: sized
+  minReplicaCount: 0
+  maxReplicaCount: 5
+  triggers:
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: "50"

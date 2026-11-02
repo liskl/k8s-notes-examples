@@ -1,0 +1,66 @@
+# Redis 8.10.3 for chapters 3 and 4, in its own namespace (Pod Security restricted): one Pod, no persistence,
+# the lab-only password from a Secret. REDISCLI_AUTH lets "kubectl exec ... redis-cli" log in without the
+# password on the command line.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: redis
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis
+  namespace: redis
+stringData:
+  password: lab-only-redis
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: redis
+spec:
+  selector:
+    matchLabels: {app: redis}
+  template:
+    metadata:
+      labels: {app: redis}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: redis
+          image: "docker.io/library/redis:8.10.3@sha256:\
+            de1068af6f552240dfab67bcc9bfef99bfc60f776bb4580ef077ea4c8c97e848"
+          args: ["--requirepass", "$(REDIS_PASSWORD)", "--save", "", "--appendonly", "no"]
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom: {secretKeyRef: {name: redis, key: password}}
+            - name: REDISCLI_AUTH
+              valueFrom: {secretKeyRef: {name: redis, key: password}}
+          ports: [{containerPort: 6379}]
+          readinessProbe:
+            exec: {command: ["redis-cli", "ping"]}
+            periodSeconds: 2
+          resources:
+            requests: {cpu: 25m, memory: 48Mi}
+          volumeMounts: [{name: data, mountPath: /data}]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+      volumes: [{name: data, emptyDir: {}}]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: redis
+spec:
+  selector: {app: redis}
+  ports: [{port: 6379}]

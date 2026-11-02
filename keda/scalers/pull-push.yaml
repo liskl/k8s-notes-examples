@@ -1,0 +1,36 @@
+# The same scaler two ways: external (KEDA asks every 30 s) and external-push (the scaler tells KEDA).
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: pull-worker
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: pull-worker
+  pollingInterval: 30
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 4
+  triggers:
+    - type: external
+      metadata:
+        scalerAddress: scaler.demo:9090
+        target: "4"
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: push-worker
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: push-worker
+  pollingInterval: 30
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 4
+  triggers:
+    - type: external-push
+      metadata:
+        scalerAddress: scaler.demo:9090
+        target: "4"

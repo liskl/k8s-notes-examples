@@ -1,0 +1,10 @@
+# KEDA 2.21's audience mapping: the operator may mint tokens for demo/metrics-reader, and only for the
+# audience keda-demo. Pass it with values/keda.yaml, since Helm starts each upgrade from the chart's
+# defaults: helm upgrade ... -f values/keda.yaml -f values/keda-audience.yaml
+permissions:
+  operator:
+    restrict:
+      serviceAccountTokenCreationRoles:
+        - name: metrics-reader
+          namespace: demo
+          audience: keda-demo

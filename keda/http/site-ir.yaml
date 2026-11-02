@@ -1,0 +1,21 @@
+# site's InterceptorRoute alone.
+apiVersion: http.keda.sh/v1beta1
+kind: InterceptorRoute
+metadata:
+  name: site
+  namespace: web
+spec:
+  target:
+    service: site
+    port: 8080
+  rules:
+    - hosts: [site.localhost]
+  scalingMetric:
+    concurrency:
+      targetValue: 10
+  staticRoutes:
+    - rules:
+        - paths: [{value: /healthz}]
+      response:
+        statusCode: 200
+        body: "static ok from the interceptor"

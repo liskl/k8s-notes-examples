@@ -1,0 +1,61 @@
+# Namespace demo, where the book's workers, ScaledObjects and TriggerAuthentications live (Pod Security
+# restricted). lab-passwords holds every lab-only password the book uses, so the toolbox and the
+# TriggerAuthentications can read them; a real cluster keeps each source's credentials apart. The toolbox
+# is keda-demo's small web app, kept running so "kubectl exec deploy/toolbox -- /keda-demo ..." can make
+# load from inside the cluster.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: lab-passwords
+  namespace: demo
+stringData:
+  redis: lab-only-redis
+  rabbitmq-url: amqp://lab:lab-only-rabbit@rabbitmq.rabbitmq:5672/
+  rabbitmq-http: http://lab:lab-only-rabbit@rabbitmq.rabbitmq:15672/
+  postgres: lab-only-postgres
+  postgres-connection: postgresql://lab:lab-only-postgres@postgres.postgres:5432/work?sslmode=disable
+  postgres-bad-connection: postgresql://lab:lab-only-postgres@postgres.nowhere:5432/work?sslmode=disable
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toolbox
+  namespace: demo
+spec:
+  selector:
+    matchLabels: {app: toolbox}
+  template:
+    metadata:
+      labels: {app: toolbox}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: toolbox
+          image: "ghcr.io/liskl/k8s-notes-examples/keda-demo:1.0.0@sha256:\
+            60fb369efffd8229e6f406d1010d5a09caa680668b182edc2bae1ed868868fe6"
+          args: ["serve", "-message", "toolbox"]
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom: {secretKeyRef: {name: lab-passwords, key: redis}}
+            - name: RABBITMQ_URL
+              valueFrom: {secretKeyRef: {name: lab-passwords, key: rabbitmq-url}}
+            - {name: PGHOST, value: postgres.postgres}
+            - {name: PGUSER, value: lab}
+            - {name: PGDATABASE, value: work}
+            - {name: PGSSLMODE, value: disable}
+            - name: PGPASSWORD
+              valueFrom: {secretKeyRef: {name: lab-passwords, key: postgres}}
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}

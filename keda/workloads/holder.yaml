@@ -1,0 +1,40 @@
+# holder: the same burn-server as burner, for the memory trigger; requests 50m CPU and 32Mi.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: holder
+  namespace: demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: holder}
+  template:
+    metadata:
+      labels: {app: holder}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: app
+          image: "ghcr.io/liskl/k8s-notes-examples/keda-demo:1.0.0@sha256:\
+            60fb369efffd8229e6f406d1010d5a09caa680668b182edc2bae1ed868868fe6"
+          args: ["burn-server"]
+          ports: [{containerPort: 8080}]
+          readinessProbe:
+            httpGet: {path: /healthz, port: 8080}
+            periodSeconds: 2
+          resources:
+            requests: {cpu: 50m, memory: 32Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: holder
+  namespace: demo
+spec:
+  selector: {app: holder}
+  ports: [{port: 8080}]
