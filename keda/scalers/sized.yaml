@@ -1,0 +1,18 @@
+# sized's ScaledObject: a cron trigger whose window is in January, so it only keeps the minimum of 1.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: sized
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: sized
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  triggers:
+    - type: cron
+      metadata:
+        timezone: UTC
+        start: "0 0 1 1 *"
+        end: "1 0 1 1 *"
+        desiredReplicas: "2"

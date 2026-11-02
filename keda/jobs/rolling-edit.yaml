@@ -1,0 +1,40 @@
+# rolling, edited: only pollingInterval changes.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: rolling
+  namespace: demo
+spec:
+  pollingInterval: 10
+  maxReplicaCount: 5
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 2
+  jobTargetRef:
+    backoffLimit: 0
+    template:
+      spec:
+        restartPolicy: Never
+        securityContext:
+          runAsNonRoot: true
+          seccompProfile: {type: RuntimeDefault}
+        containers:
+          - name: job
+            image: "ghcr.io/liskl/k8s-notes-examples/keda-demo:1.0.0@sha256:\
+                60fb369efffd8229e6f406d1010d5a09caa680668b182edc2bae1ed868868fe6"
+            args: ["job", "-list", "rolling", "-each", "60s"]
+            env:
+              - name: REDIS_PASSWORD
+                valueFrom: {secretKeyRef: {name: lab-passwords, key: redis}}
+            resources:
+              requests: {cpu: 10m, memory: 16Mi}
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities: {drop: [ALL]}
+  triggers:
+    - type: redis
+      metadata:
+        address: redis.redis:6379
+        listName: rolling
+        listLength: "1"
+      authenticationRef:
+        name: redis

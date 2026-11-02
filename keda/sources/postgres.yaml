@@ -1,0 +1,69 @@
+# PostgreSQL 18.6 for chapter 10, in its own namespace (Pod Security restricted), as uid 999. Since 18
+# the image keeps its data under /var/lib/postgresql (an emptyDir here); the lab-only password comes from
+# a Secret.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: postgres
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres
+  namespace: postgres
+stringData:
+  password: lab-only-postgres
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: postgres
+spec:
+  selector:
+    matchLabels: {app: postgres}
+  template:
+    metadata:
+      labels: {app: postgres}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: postgres
+          image: "docker.io/library/postgres:18.6@sha256:\
+            3a4264520e121176619f54ff867d12774bc81e95e7b84db58d63bccdb6144b81"
+          env:
+            - {name: POSTGRES_USER, value: lab}
+            - {name: POSTGRES_DB, value: work}
+            - name: POSTGRES_PASSWORD
+              valueFrom: {secretKeyRef: {name: postgres, key: password}}
+          ports: [{containerPort: 5432}]
+          readinessProbe:
+            exec: {command: ["pg_isready", "-U", "lab", "-d", "work"]}
+            periodSeconds: 3
+          resources:
+            requests: {cpu: 50m, memory: 128Mi}
+          volumeMounts:
+            - {name: data, mountPath: /var/lib/postgresql}
+            - {name: run, mountPath: /var/run/postgresql}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+      volumes:
+        - {name: data, emptyDir: {}}
+        - {name: run, emptyDir: {}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: postgres
+spec:
+  selector: {app: postgres}
+  ports: [{port: 5432}]

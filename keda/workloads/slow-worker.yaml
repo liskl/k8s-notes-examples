@@ -1,0 +1,30 @@
+# slow-worker: one job takes 60 s, and on SIGTERM it walks away from the job in hand (-on-term drop).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: slow-worker
+  namespace: demo
+spec:
+  replicas: 0
+  selector:
+    matchLabels: {app: slow-worker}
+  template:
+    metadata:
+      labels: {app: slow-worker}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: worker
+          image: "ghcr.io/liskl/k8s-notes-examples/keda-demo:1.0.0@sha256:\
+            60fb369efffd8229e6f406d1010d5a09caa680668b182edc2bae1ed868868fe6"
+          args: ["redis-work", "-list", "slow", "-each", "60s", "-on-term", "drop"]
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom: {secretKeyRef: {name: lab-passwords, key: redis}}
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}

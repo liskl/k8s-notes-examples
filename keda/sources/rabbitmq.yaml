@@ -1,0 +1,68 @@
+# RabbitMQ 4.4.0 with its management plugin (the http API) for chapter 7, in its own namespace (Pod
+# Security restricted), as uid 999 with an emptyDir for its data. The user lab comes from a Secret: guest
+# may only log in from inside the Pod.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rabbitmq
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rabbitmq
+  namespace: rabbitmq
+stringData:
+  user: lab
+  password: lab-only-rabbit
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  namespace: rabbitmq
+spec:
+  selector:
+    matchLabels: {app: rabbitmq}
+  template:
+    metadata:
+      labels: {app: rabbitmq}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: rabbitmq
+          image: "docker.io/library/rabbitmq:4.4.0-management@sha256:\
+            af6f50d38098d8bd52fef7f3fa85015dd8b2bf6def58e995bf584ae9ba0f6407"
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom: {secretKeyRef: {name: rabbitmq, key: user}}
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom: {secretKeyRef: {name: rabbitmq, key: password}}
+          ports: [{name: amqp, containerPort: 5672}, {name: http, containerPort: 15672}]
+          readinessProbe:
+            exec: {command: ["rabbitmq-diagnostics", "-q", "check_port_connectivity"]}
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 10
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+          volumeMounts: [{name: data, mountPath: /var/lib/rabbitmq}]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+      volumes: [{name: data, emptyDir: {}}]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  namespace: rabbitmq
+spec:
+  selector: {app: rabbitmq}
+  ports: [{name: amqp, port: 5672}, {name: http, port: 15672}]

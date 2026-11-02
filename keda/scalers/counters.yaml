@@ -1,0 +1,46 @@
+# The same queue counted two ways: over AMQP, and over the http API.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: count-amqp
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: count-amqp
+  pollingInterval: 5
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 6
+  triggers:
+    - type: rabbitmq
+      metadata:
+        host: amqp://rabbitmq.rabbitmq:5672/
+        protocol: amqp
+        queueName: held
+        mode: QueueLength
+        value: "100"
+      authenticationRef:
+        name: rabbitmq
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: count-http
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: count-http
+  pollingInterval: 5
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 6
+  triggers:
+    - type: rabbitmq
+      metadata:
+        host: http://rabbitmq.rabbitmq:15672/
+        protocol: http
+        queueName: held
+        mode: QueueLength
+        value: "100"
+      authenticationRef:
+        name: rabbitmq

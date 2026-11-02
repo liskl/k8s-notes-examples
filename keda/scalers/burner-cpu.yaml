@@ -1,0 +1,16 @@
+# burner scales on CPU: 50% of its 50m request, averaged over its Pods (the HPA's own Resource metric).
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: burner
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: burner
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  triggers:
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: "50"

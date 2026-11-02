@@ -1,0 +1,15 @@
+# The escape hatch the 2.21 migration guide calls insecure, here only to show what the CVE fix stops: tokens
+# minted with no audience, so they are good for the API server itself. Never run this outside a throwaway lab.
+operator:
+  serviceAccountTokens:
+    mode: legacy
+    additionalAllowedAudiences: []
+hashiCorpVault:
+  kubernetesAuth:
+    audience: ""
+permissions:
+  operator:
+    restrict:
+      serviceAccountTokenCreationRoles:
+        - name: metrics-reader
+          namespace: demo

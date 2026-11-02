@@ -1,0 +1,16 @@
+# An HTTPRoute for noroute.localhost to the interceptor, with no InterceptorRoute for that host.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: noroute
+  namespace: web
+spec:
+  parentRefs:
+    - name: http
+      namespace: kgateway-system
+  hostnames: [noroute.localhost]
+  rules:
+    - backendRefs:
+        - name: keda-add-ons-http-interceptor-proxy
+          namespace: keda
+          port: 8080

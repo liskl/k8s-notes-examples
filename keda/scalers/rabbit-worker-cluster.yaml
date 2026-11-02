@@ -1,0 +1,24 @@
+# rabbit-worker again, its credentials from the ClusterTriggerAuthentication.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: rabbit-worker
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: rabbit-worker
+  pollingInterval: 5
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 6
+  triggers:
+    - type: rabbitmq
+      metadata:
+        host: amqp://rabbitmq.rabbitmq:5672/
+        protocol: amqp
+        queueName: tasks
+        mode: QueueLength
+        value: "5"
+      authenticationRef:
+        name: rabbitmq-shared
+        kind: ClusterTriggerAuthentication

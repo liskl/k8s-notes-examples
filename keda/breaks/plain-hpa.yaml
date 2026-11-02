@@ -1,0 +1,15 @@
+# A plain HPA on sized, made after KEDA's: the webhook does not see HPAs, so nothing stops it.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: mine
+  namespace: demo
+spec:
+  scaleTargetRef: {apiVersion: apps/v1, kind: Deployment, name: sized}
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: {type: Utilization, averageUtilization: 50}

@@ -1,0 +1,27 @@
+# list-worker with an HPA behavior: it may add at most 2 replicas every 15 s, so the climb shows in steps.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: list-worker
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: list-worker
+  pollingInterval: 5
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 6
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          policies:
+            - {type: Pods, value: 2, periodSeconds: 15}
+  triggers:
+    - type: redis
+      metadata:
+        address: redis.redis:6379
+        listName: jobs
+        listLength: "5"
+      authenticationRef:
+        name: redis

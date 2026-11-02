@@ -1,0 +1,23 @@
+# list-worker with an idle count: no replicas with no work, and straight to minReplicaCount (2) when work
+# comes.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: list-worker
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: list-worker
+  pollingInterval: 5
+  cooldownPeriod: 30
+  minReplicaCount: 2
+  maxReplicaCount: 6
+  idleReplicaCount: 0
+  triggers:
+    - type: redis
+      metadata:
+        address: redis.redis:6379
+        listName: jobs
+        listLength: "5"
+      authenticationRef:
+        name: redis

@@ -1,0 +1,20 @@
+# Chapter 2's first ScaledObject: a cron trigger whose window covers every hour from minute 0 to minute 59
+# (UTC), asking for three replicas inside it. Outside the window the trigger is inactive.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: clock
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: clock
+  minReplicaCount: 0
+  maxReplicaCount: 5
+  cooldownPeriod: 30
+  triggers:
+    - type: cron
+      metadata:
+        timezone: UTC
+        start: "0 * * * *"
+        end: "59 * * * *"
+        desiredReplicas: "3"

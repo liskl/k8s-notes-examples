@@ -1,0 +1,47 @@
+# Namespace web (Pod Security restricted) and site, a small web app at zero replicas behind its Service.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: web
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: site
+  namespace: web
+spec:
+  replicas: 0
+  selector:
+    matchLabels: {app: site}
+  template:
+    metadata:
+      labels: {app: site}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: app
+          image: "ghcr.io/liskl/k8s-notes-examples/keda-demo:1.0.0@sha256:\
+            60fb369efffd8229e6f406d1010d5a09caa680668b182edc2bae1ed868868fe6"
+          args: ["serve", "-message", "hello from site"]
+          ports: [{containerPort: 8080}]
+          readinessProbe:
+            httpGet: {path: /healthz, port: 8080}
+            periodSeconds: 1
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: site
+  namespace: web
+spec:
+  selector: {app: site}
+  ports: [{port: 8080}]

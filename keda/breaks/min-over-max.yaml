@@ -1,0 +1,18 @@
+# Breaks the CRD's own rule: the minimum above the maximum.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: upside
+  namespace: demo
+spec:
+  scaleTargetRef:
+    name: sized
+  minReplicaCount: 6
+  maxReplicaCount: 3
+  triggers:
+    - type: cron
+      metadata:
+        timezone: UTC
+        start: "0 0 1 1 *"
+        end: "1 0 1 1 *"
+        desiredReplicas: "2"
