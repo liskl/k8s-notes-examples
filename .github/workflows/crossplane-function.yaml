@@ -1,0 +1,85 @@
+# Publishes Field Guide 08's composition function, function-appdb-schemas, as a Crossplane package (an
+# xpkg) at ghcr.io/<owner>/k8s-notes-examples/function-appdb-schemas (crossplane/function/fn.go says what it
+# does). Run it by hand, with the tag to publish:
+#
+#   gh workflow run crossplane-function.yaml -R <owner>/k8s-notes-examples -f tag=v1.0.0
+#
+# A function package is two things in one image: the function's runtime image (the Dockerfile) and the
+# package metadata (package/crossplane.yaml and the input's schema). The workflow builds the runtime for
+# linux/amd64 and linux/arm64 (Go cross-compiles, so no emulation), wraps each in an xpkg with the
+# crossplane CLI, pinned by checksum, and pushes both under one tag as a two-platform index. The book
+# pins the package by digest, so a reader never needs to run this.
+name: crossplane-function
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to publish, for example v1.0.0'
+        required: true
+        type: string
+concurrency:
+  group: crossplane-function
+  cancel-in-progress: false
+permissions:
+  contents: read
+  packages: write   # push to ghcr.io with the workflow's GITHUB_TOKEN
+env:
+  CLI_URL: https://cli.crossplane.io/stable/v2.5.0/bin/linux_amd64/crossplane
+  CLI_SHA256: 065dd6b40c9ea5fc71e49900d5c924cc0bec7f58375922ddbde6b402f292347e
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check the tag and name the package
+        id: names
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          re='^v[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.]+)?$'
+          [[ $TAG =~ $re ]] || { echo "not a version tag (v1.2.3): $TAG" >&2; exit 1; }
+          # ghcr.io wants lower case
+          echo "package=ghcr.io/${GITHUB_REPOSITORY,,}/function-appdb-schemas:$TAG" >> "$GITHUB_OUTPUT"
+      - name: Test, in the Go image the Dockerfile builds with
+        working-directory: crossplane/function
+        run: |
+          docker run --rm -v "$PWD":/fn -w /fn -e GOTOOLCHAIN=local \
+            docker.io/library/golang:1.27.4@sha256:5e8afd493a7124a8586e134d9b532731161d4b9becf9dee5a5956b107426f93d \
+            go test ./...
+      - name: The crossplane CLI, by checksum
+        run: |
+          curl -sSLo crossplane "$CLI_URL"
+          echo "$CLI_SHA256  crossplane" | sha256sum -c -
+          sudo install -m 0755 crossplane /usr/local/bin/crossplane
+          crossplane version --client
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build the runtime image for each platform, to a tarball
+        working-directory: crossplane/function
+        run: |
+          for arch in amd64 arm64; do
+            docker buildx build --platform "linux/$arch" \
+              --build-arg "SOURCE=https://github.com/$GITHUB_REPOSITORY" \
+              --provenance=false --sbom=false \
+              --output "type=docker,dest=$RUNNER_TEMP/runtime-$arch.tar" .
+          done
+      - name: Wrap each runtime in a package
+        working-directory: crossplane/function
+        run: |
+          for arch in amd64 arm64; do
+            crossplane xpkg build --package-root=package \
+              --embed-runtime-image-tarball="$RUNNER_TEMP/runtime-$arch.tar" \
+              --package-file="$RUNNER_TEMP/function-$arch.xpkg"
+          done
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push both packages under one tag
+        env:
+          PACKAGE: ${{ steps.names.outputs.package }}
+        run: |
+          crossplane xpkg push "$PACKAGE" \
+            --package-files="$RUNNER_TEMP/function-amd64.xpkg,$RUNNER_TEMP/function-arm64.xpkg" \
+            --oci-annotation="org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY"
+          echo "pushed $PACKAGE"
