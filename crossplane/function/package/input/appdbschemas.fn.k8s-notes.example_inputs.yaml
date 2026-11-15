@@ -1,0 +1,63 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.23.0
+  name: inputs.appdbschemas.fn.k8s-notes.example
+spec:
+  group: appdbschemas.fn.k8s-notes.example
+  names:
+    categories:
+    - crossplane
+    kind: Input
+    listKind: InputList
+    plural: inputs
+    singular: input
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: Input is the step input of function-appdb-schemas.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          break:
+            description: |-
+              Break makes the function fail on purpose, for the book's break pages:
+              "panic" panics, "bare-response" answers without response.To.
+            enum:
+            - panic
+            - bare-response
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          providerConfig:
+            description: |-
+              ProviderConfig names the provider-sql ProviderConfig in the XR's
+              namespace. Empty means the XR's own name.
+            type: string
+          reserved:
+            description: |-
+              Reserved lists more schema names to refuse, on top of public,
+              information_schema and anything starting pg_.
+            items:
+              type: string
+            type: array
+        type: object
+    served: true
+    storage: true
