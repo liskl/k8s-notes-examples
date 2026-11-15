@@ -48,9 +48,10 @@ jobs:
             go test ./...
       - name: The crossplane CLI, by checksum
         run: |
-          curl -sSLo crossplane "$CLI_URL"
-          echo "$CLI_SHA256  crossplane" | sha256sum -c -
-          sudo install -m 0755 crossplane /usr/local/bin/crossplane
+          # into the runner's temp folder: the checkout already has a folder named crossplane
+          curl -sSLo "$RUNNER_TEMP/crossplane" "$CLI_URL"
+          echo "$CLI_SHA256  $RUNNER_TEMP/crossplane" | sha256sum -c -
+          sudo install -m 0755 "$RUNNER_TEMP/crossplane" /usr/local/bin/crossplane
           crossplane version --client
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - name: Build the runtime image for each platform, to a tarball
