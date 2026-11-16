@@ -77,21 +77,28 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 		return rsp, nil
 	}
 	xrName := oxr.Resource.GetName()
+	xr := oxr.Resource.GetNamespace() + "/" + xrName
 
 	var schemas []Schema
 	if err := oxr.Resource.GetValueInto("spec.schemas", &schemas); err != nil {
 		// No spec.schemas: nothing to add. Earlier steps' resources stay.
-		f.log.Debug("No spec.schemas", "xr", xrName)
+		f.log.Debug("No spec.schemas", "xr", xr)
 		schemas = nil
 	}
 
+	// The list is checked whole before anything is composed. The verdict is a
+	// condition on the XR either way, so a refusal does not outlive its cause.
 	if err := checkNames(schemas, in.Reserved); err != nil {
+		f.log.Info("Refused schemas", "xr", xr, "schemas", len(schemas), "error", err.Error())
 		response.Fatal(rsp, err)
 		response.ConditionFalse(rsp, "SchemasValid", "InvalidSchemaName").
 			WithMessage(err.Error()).
 			TargetComposite()
 		return rsp, nil
 	}
+	response.ConditionTrue(rsp, "SchemasValid", "Checked").
+		WithMessage(fmt.Sprintf("%d schema name(s) accepted", len(schemas))).
+		TargetComposite()
 
 	pc := in.ProviderConfig
 	if pc == "" {
@@ -112,6 +119,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 	}
 
 	status := make([]any, 0, len(schemas))
+	readyCount := 0
 	for _, s := range schemas {
 		k8sName := xrName + "-" + strings.ReplaceAll(s.Name, "_", "-")
 		privs := []any{"USAGE"}
@@ -179,6 +187,9 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 			}
 			desired[name] = &resource.DesiredComposed{Resource: cd, Ready: ready}
 		}
+		if allReady {
+			readyCount++
+		}
 		status = append(status, map[string]any{"name": s.Name, "ready": allReady})
 	}
 
@@ -202,6 +213,17 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 		return rsp, nil
 	}
 
+	// SchemasReady sums status.schemas up: a schema is ready when its Schema,
+	// Grant and DefaultPrivileges all are.
+	summary := fmt.Sprintf("%d of %d schemas ready", readyCount, len(schemas))
+	if readyCount == len(schemas) {
+		response.ConditionTrue(rsp, "SchemasReady", "AllReady").WithMessage(summary).TargetComposite()
+	} else {
+		response.ConditionFalse(rsp, "SchemasReady", "Waiting").WithMessage(summary).TargetComposite()
+	}
+
+	// One line a call at the default log level; --debug adds the request's tag.
+	f.log.Info("Composed schemas", "xr", xr, "schemas", len(schemas), "ready", readyCount)
 	response.Normalf(rsp, "composed %d schema(s)", len(schemas))
 	return rsp, nil
 }

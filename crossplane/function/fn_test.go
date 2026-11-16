@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -42,6 +43,31 @@ func fatal(rsp *fnv1.RunFunctionResponse) string {
 		}
 	}
 	return ""
+}
+
+// conds lists a response's conditions, a line each: type, status, reason and message.
+func conds(rsp *fnv1.RunFunctionResponse) []string {
+	var c []string
+	for _, x := range rsp.GetConditions() {
+		status := map[fnv1.Status]string{
+			fnv1.Status_STATUS_CONDITION_TRUE: "True", fnv1.Status_STATUS_CONDITION_FALSE: "False",
+		}[x.GetStatus()]
+		c = append(c, strings.Join([]string{x.GetType(), status, x.GetReason(), x.GetMessage()}, " "))
+		if x.GetTarget() != fnv1.Target_TARGET_COMPOSITE {
+			c = append(c, x.GetType()+" is not aimed at the composite resource alone")
+		}
+	}
+	return c
+}
+
+// A recorder keeps what the function logs at the default level; the debug lines go nowhere.
+type recorder struct {
+	logging.Logger
+	info []string
+}
+
+func (r *recorder) Info(msg string, kv ...any) {
+	r.info = append(r.info, strings.TrimSpace(fmt.Sprintln(append([]any{msg}, kv...)...)))
 }
 
 func keys(rsp *fnv1.RunFunctionResponse) []string {
@@ -87,6 +113,13 @@ func TestOneSchema(t *testing.T) {
 	if diff := cmp.Diff(map[string]any{"schemas": []any{map[string]any{"name": "sales", "ready": false}}}, st); diff != "" {
 		t.Errorf("status: -want, +got:\n%s", diff)
 	}
+	want2 := []string{
+		"SchemasValid True Checked 1 schema name(s) accepted",
+		"SchemasReady False Waiting 0 of 1 schemas ready",
+	}
+	if diff := cmp.Diff(want2, conds(rsp)); diff != "" {
+		t.Errorf("conditions: -want, +got:\n%s", diff)
+	}
 }
 
 func TestTwoSchemasKeepOtherStepsResources(t *testing.T) {
@@ -128,6 +161,57 @@ func TestObservedReady(t *testing.T) {
 	if diff := cmp.Diff([]any{map[string]any{"name": "sales", "ready": true}}, st); diff != "" {
 		t.Errorf("status.schemas: -want, +got:\n%s", diff)
 	}
+	want := []string{
+		"SchemasValid True Checked 1 schema name(s) accepted",
+		"SchemasReady True AllReady 1 of 1 schemas ready",
+	}
+	if diff := cmp.Diff(want, conds(rsp)); diff != "" {
+		t.Errorf("conditions: -want, +got:\n%s", diff)
+	}
+}
+
+// One schema of two is ready: the XR's SchemasReady says how far it is.
+func TestHalfReady(t *testing.T) {
+	obs := xr(`[{"name":"sales"},{"name":"audit"}]`)
+	obs.Resources = map[string]*fnv1.Resource{
+		"schema-sales":  {Resource: resource.MustStructJSON(`{"status":{"conditions":[{"type":"Ready","status":"True"}]}}`)},
+		"grant-sales":   {Resource: resource.MustStructJSON(`{"status":{"conditions":[{"type":"Ready","status":"True"}]}}`)},
+		"defpriv-sales": {Resource: resource.MustStructJSON(`{"status":{"conditions":[{"type":"Ready","status":"True"}]}}`)},
+		"schema-audit":  {Resource: resource.MustStructJSON(`{"status":{"conditions":[{"type":"Ready","status":"True"}]}}`)},
+		"grant-audit":   {Resource: resource.MustStructJSON(`{"status":{"conditions":[{"type":"Ready","status":"False"}]}}`)},
+	}
+	rsp := run(t, &fnv1.RunFunctionRequest{Input: resource.MustStructJSON(input), Observed: obs})
+	want := []string{
+		"SchemasValid True Checked 2 schema name(s) accepted",
+		"SchemasReady False Waiting 1 of 2 schemas ready",
+	}
+	if diff := cmp.Diff(want, conds(rsp)); diff != "" {
+		t.Errorf("conditions: -want, +got:\n%s", diff)
+	}
+}
+
+// At the default log level the function writes one line a call, for a pass and for a refusal.
+func TestOneInfoLineACall(t *testing.T) {
+	cases := map[string]struct{ schemas, want string }{
+		"Composed": {schemas: `[{"name":"sales"},{"name":"audit"}]`, want: "Composed schemas xr team-a/web schemas 2 ready 0"},
+		"Refused": {
+			schemas: `[{"name":"public"}]`,
+			want:    `Refused schemas xr team-a/web schemas 1 error spec.schemas[0]: "public" is reserved`,
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			rec := &recorder{Logger: logging.NewNopLogger()}
+			f := &Function{log: rec}
+			req := &fnv1.RunFunctionRequest{Input: resource.MustStructJSON(input), Observed: xr(tc.schemas)}
+			if _, err := f.RunFunction(context.Background(), req); err != nil {
+				t.Fatalf("RunFunction returned a Go error: %v", err)
+			}
+			if diff := cmp.Diff([]string{tc.want}, rec.info); diff != "" {
+				t.Errorf("info lines: -want, +got:\n%s", diff)
+			}
+		})
+	}
 }
 
 func TestNoSchemas(t *testing.T) {
@@ -140,6 +224,13 @@ func TestNoSchemas(t *testing.T) {
 	}
 	if len(rsp.GetDesired().GetResources()) != 0 {
 		t.Errorf("want no resources, got %v", keys(rsp))
+	}
+	want := []string{
+		"SchemasValid True Checked 0 schema name(s) accepted",
+		"SchemasReady True AllReady 0 of 0 schemas ready",
+	}
+	if diff := cmp.Diff(want, conds(rsp)); diff != "" {
+		t.Errorf("conditions: -want, +got:\n%s", diff)
 	}
 }
 
@@ -170,8 +261,13 @@ func TestBadNames(t *testing.T) {
 			if m := fatal(rsp); !strings.Contains(m, tc.want) {
 				t.Errorf("fatal: want it to contain %q, got %q", tc.want, m)
 			}
-			if len(rsp.GetConditions()) != 1 || rsp.GetConditions()[0].GetType() != "SchemasValid" {
-				t.Errorf("want one SchemasValid condition, got %v", rsp.GetConditions())
+			// A refusal sets SchemasValid False and says nothing of SchemasReady.
+			c := conds(rsp)
+			if len(c) != 1 || !strings.HasPrefix(c[0], "SchemasValid False InvalidSchemaName spec.schemas[") {
+				t.Errorf("want one condition, SchemasValid False InvalidSchemaName, got %v", c)
+			}
+			if len(rsp.GetDesired().GetResources()) != 0 {
+				t.Errorf("a refusal composes nothing, got %v", keys(rsp))
 			}
 		})
 	}
