@@ -1,0 +1,15 @@
+# Chapter 6, a throwaway: the same read-only Database for a name that is not in the server. Observe alone
+# never creates, so it can only report that nothing is there.
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Database
+metadata:
+  name: no-such
+  namespace: data
+  annotations:
+    crossplane.io/external-name: no_such_database
+spec:
+  managementPolicies: ["Observe"]
+  providerConfigRef:
+    kind: ProviderConfig
+    name: pg
+  forProvider: {}

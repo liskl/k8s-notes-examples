@@ -1,0 +1,14 @@
+# Chapter 11: the same throwaway request with a selector. It names no Composition, but says which label
+# the one it gets must carry.
+apiVersion: platform.k8s-notes.example/v1
+kind: AppDatabase
+metadata:
+  name: pick
+  namespace: team-c
+spec:
+  crossplane:
+    compositionSelector:
+      matchLabels:
+        class: sketch
+  schemas:
+  - name: notes

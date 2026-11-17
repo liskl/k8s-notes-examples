@@ -1,0 +1,168 @@
+# Chapter 11: the API grows one optional field, spec.app, with a rule that ties it to spec.schemas, one
+# status field, status.host, and a printer column. Nothing a team already wrote changes meaning, so this
+# is a change in place, in both versions (they must share a schema: nothing converts between them).
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: appdatabases.platform.k8s-notes.example
+spec:
+  scope: Namespaced
+  group: platform.k8s-notes.example
+  names:
+    kind: AppDatabase
+    plural: appdatabases
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: false
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            x-kubernetes-validations:
+            - rule: >-
+                !has(self.app) ||
+                (has(self.schemas) && self.schemas.exists(s, s.name == self.app.schema))
+              message: app.schema must name one of the schemas
+            properties:
+              app:
+                description: Runs the demo web app in front of the database, at the lab's door.
+                type: object
+                required: [schema]
+                properties:
+                  schema:
+                    description: The schema the app works in. It must be one of schemas.
+                    type: string
+              storage:
+                description: The size of the database's volume. It can grow, never shrink.
+                type: string
+                default: 1Gi
+                pattern: "^[1-9][0-9]*(Mi|Gi)$"
+                x-kubernetes-validations:
+                - rule: "!quantity(self).isLessThan(quantity(oldSelf))"
+                  message: storage can grow, never shrink
+              schemas:
+                description: The PostgreSQL schemas to make in the database.
+                type: array
+                maxItems: 8
+                x-kubernetes-list-type: map
+                x-kubernetes-list-map-keys: [name]
+                items:
+                  type: object
+                  required: [name]
+                  properties:
+                    name:
+                      description: The schema's name, as PostgreSQL will keep it.
+                      type: string
+                      pattern: "^[a-z_][a-z0-9_]*$"
+                    access:
+                      description: What the app's role may do in the schema.
+                      type: string
+                      enum: [read, write]
+                      default: read
+          status:
+            type: object
+            properties:
+              endpoint:
+                description: The host name an app connects to.
+                type: string
+              secret:
+                description: The Secret with the app role's user name and password.
+                type: string
+              host:
+                description: The host name the app answers to at the door, if the request has an app.
+                type: string
+              schemas:
+                description: Each schema, and whether everything made for it is ready.
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    ready:
+                      type: boolean
+  - name: v1
+    served: true
+    referenceable: true
+    additionalPrinterColumns:
+    - name: STORAGE
+      type: string
+      jsonPath: .spec.storage
+    - name: ENDPOINT
+      type: string
+      jsonPath: .status.endpoint
+    - name: APP
+      type: string
+      jsonPath: .status.host
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            x-kubernetes-validations:
+            - rule: >-
+                !has(self.app) ||
+                (has(self.schemas) && self.schemas.exists(s, s.name == self.app.schema))
+              message: app.schema must name one of the schemas
+            properties:
+              app:
+                description: Runs the demo web app in front of the database, at the lab's door.
+                type: object
+                required: [schema]
+                properties:
+                  schema:
+                    description: The schema the app works in. It must be one of schemas.
+                    type: string
+              storage:
+                description: The size of the database's volume. It can grow, never shrink.
+                type: string
+                default: 1Gi
+                pattern: "^[1-9][0-9]*(Mi|Gi)$"
+                x-kubernetes-validations:
+                - rule: "!quantity(self).isLessThan(quantity(oldSelf))"
+                  message: storage can grow, never shrink
+              schemas:
+                description: The PostgreSQL schemas to make in the database.
+                type: array
+                maxItems: 8
+                x-kubernetes-list-type: map
+                x-kubernetes-list-map-keys: [name]
+                items:
+                  type: object
+                  required: [name]
+                  properties:
+                    name:
+                      description: The schema's name, as PostgreSQL will keep it.
+                      type: string
+                      pattern: "^[a-z_][a-z0-9_]*$"
+                    access:
+                      description: What the app's role may do in the schema.
+                      type: string
+                      enum: [read, write]
+                      default: read
+          status:
+            type: object
+            properties:
+              endpoint:
+                description: The host name an app connects to.
+                type: string
+              secret:
+                description: The Secret with the app role's user name and password.
+                type: string
+              host:
+                description: The host name the app answers to at the door, if the request has an app.
+                type: string
+              schemas:
+                description: Each schema, and whether everything made for it is ready.
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    ready:
+                      type: boolean

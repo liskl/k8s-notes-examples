@@ -1,0 +1,11 @@
+# Layer 2: the packages this platform runs, from the files chapters 2 to 12 applied by hand. Two
+# providers (the lab's other two have no part in the AppDatabase API), the six functions, and for
+# provider-kubernetes its fixed account, its runtime config and its activation policy.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../../packages/provider-sql.yaml
+- ../../packages/provider-kubernetes.yaml
+- ../../packages/activation-kubernetes.yaml
+- ../../packages/functions.yaml
+- ../../packages/function-appdb-schemas.yaml

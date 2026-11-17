@@ -78,5 +78,5 @@ and needs no login to pull.
 
 | Version | What changed |
 |---|---|
-| v1.0.0 | the first release: the three resources a schema, `status.schemas`, `SchemasValid False` on a refusal |
+| v1.0.0 | the first release: three resources a schema, `status.schemas`, `SchemasValid` only to refuse |
 | v1.0.1 | `SchemasValid True` when the list passes, the condition `SchemasReady`, one log line a call |

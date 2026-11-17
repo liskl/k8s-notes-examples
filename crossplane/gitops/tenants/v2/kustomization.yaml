@@ -1,0 +1,7 @@
+# Chapter 13, tenants/v2: orders asks for a second schema. Nothing else changed.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- limits.yaml
+- orders.yaml
+- scratch.yaml

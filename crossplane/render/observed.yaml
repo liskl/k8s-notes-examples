@@ -1,0 +1,70 @@
+# Chapter 9: what a cluster would hold a few minutes after render/xr.yaml was applied, written by hand for
+# crossplane composition render --observed-resources. Each object names its place in the Composition, and
+# says Ready where its kind has such a condition. The Secret carries no password.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: shop-admin
+  namespace: team-c
+  annotations:
+    crossplane.io/composition-resource-name: admin
+type: kubernetes.io/basic-auth
+data:
+  username: cG9zdGdyZXM=
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: shop
+  namespace: team-c
+  annotations:
+    crossplane.io/composition-resource-name: providerconfig
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: shop
+  namespace: team-c
+  annotations:
+    crossplane.io/composition-resource-name: cluster
+status:
+  writeService: shop-rw
+  conditions:
+  - type: Ready
+    status: "True"
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Role
+metadata:
+  name: shop-app
+  namespace: team-c
+  annotations:
+    crossplane.io/composition-resource-name: role
+status:
+  conditions:
+  - type: Ready
+    status: "True"
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Database
+metadata:
+  name: shop
+  namespace: team-c
+  annotations:
+    crossplane.io/composition-resource-name: database
+status:
+  conditions:
+  - type: Ready
+    status: "True"
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Schema
+metadata:
+  name: shop-catalog
+  namespace: team-c
+  annotations:
+    crossplane.io/composition-resource-name: schema-catalog
+status:
+  conditions:
+  - type: Ready
+    status: "True"

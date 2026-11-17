@@ -1,0 +1,11 @@
+# Chapter 13: the hub, the path flux/hub.yaml reads. One Flux Kustomization a file, a layer each. The
+# order is not in this list: it is in each one's dependsOn.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- core.yaml
+- packages.yaml
+- configs.yaml
+- api.yaml
+- postgres-operator.yaml
+- tenants.yaml

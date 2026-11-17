@@ -1,0 +1,10 @@
+# provider-helm's ProviderConfig for sandbox: this cluster, as the provider Pod's own ServiceAccount.
+# It has the same name as provider-kubernetes' one and is a different kind (chapter 4).
+apiVersion: helm.m.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: in-cluster
+  namespace: sandbox
+spec:
+  credentials:
+    source: InjectedIdentity

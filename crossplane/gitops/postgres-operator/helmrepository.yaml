@@ -1,0 +1,9 @@
+# Chapter 13: CloudNativePG's chart repository, the one chapter 5 downloaded the chart from.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: cnpg
+  namespace: cnpg-system
+spec:
+  interval: 1h
+  url: https://cloudnative-pg.github.io/charts

@@ -1,0 +1,61 @@
+# Three Objects that differ only in managementPolicies, the list of things a provider may do for a managed
+# resource (chapter 3). look: read only. keep: everything but Delete. wrong: a set the runtime does not know.
+apiVersion: kubernetes.m.crossplane.io/v1alpha1
+kind: Object
+metadata:
+  name: look
+  namespace: sandbox
+spec:
+  managementPolicies: ["Observe"]
+  providerConfigRef:
+    kind: ProviderConfig
+    name: in-cluster
+  forProvider:
+    manifest:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: by-hand
+        namespace: sandbox
+      data:
+        colour: yellow
+---
+apiVersion: kubernetes.m.crossplane.io/v1alpha1
+kind: Object
+metadata:
+  name: keep
+  namespace: sandbox
+spec:
+  managementPolicies: ["Observe", "Create", "Update", "LateInitialize"]
+  providerConfigRef:
+    kind: ProviderConfig
+    name: in-cluster
+  forProvider:
+    manifest:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: kept
+        namespace: sandbox
+      data:
+        colour: purple
+---
+apiVersion: kubernetes.m.crossplane.io/v1alpha1
+kind: Object
+metadata:
+  name: wrong
+  namespace: sandbox
+spec:
+  managementPolicies: ["Create", "Delete"]
+  providerConfigRef:
+    kind: ProviderConfig
+    name: in-cluster
+  forProvider:
+    manifest:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: never-made
+        namespace: sandbox
+      data:
+        colour: grey

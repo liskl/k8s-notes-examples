@@ -1,0 +1,7 @@
+# Chapter 13: team-a's namespace, under the restricted Pod Security level, as on the lab.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-a
+  labels:
+    pod-security.kubernetes.io/enforce: restricted

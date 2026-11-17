@@ -1,0 +1,21 @@
+# An Object: a managed resource of provider-kubernetes. What it manages is one Kubernetes object, written
+# out under forProvider.manifest: here a ResourceQuota for the namespace sandbox (chapter 3).
+apiVersion: kubernetes.m.crossplane.io/v1alpha1
+kind: Object
+metadata:
+  name: quota
+  namespace: sandbox
+spec:
+  providerConfigRef:
+    kind: ProviderConfig
+    name: in-cluster
+  forProvider:
+    manifest:
+      apiVersion: v1
+      kind: ResourceQuota
+      metadata:
+        name: sandbox
+        namespace: sandbox
+      spec:
+        hard:
+          pods: "10"

@@ -1,0 +1,52 @@
+# Chapter 6, throwaways: the second try as xp-narrow, after the role was given the setting
+# createrole_self_grant = 'set, inherit'. A new role, then a database, a schema and default privileges
+# that belong to that new role. The label is the same as in narrow.yaml.
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Role
+metadata:
+  name: narrow-owner2
+  namespace: data
+  labels: {try: narrow}
+spec:
+  providerConfigRef: {kind: ProviderConfig, name: narrow}
+  forProvider:
+    privileges: {login: true}
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Database
+metadata:
+  name: narrow-owned2
+  namespace: data
+  labels: {try: narrow}
+spec:
+  providerConfigRef: {kind: ProviderConfig, name: narrow}
+  forProvider:
+    owner: narrow-owner2
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Schema
+metadata:
+  name: narrow-given2
+  namespace: data
+  labels: {try: narrow}
+spec:
+  providerConfigRef: {kind: ProviderConfig, name: narrow}
+  forProvider:
+    databaseRef: {name: narrow-db}
+    roleRef: {name: narrow-owner2}
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: DefaultPrivileges
+metadata:
+  name: narrow-dp-owner2
+  namespace: data
+  labels: {try: narrow}
+spec:
+  providerConfigRef: {kind: ProviderConfig, name: narrow}
+  forProvider:
+    targetRole: narrow-owner2
+    objectType: table
+    privileges: [SELECT]
+    schema: narrow-own
+    databaseRef: {name: narrow-db}
+    roleRef: {name: narrow-owner}

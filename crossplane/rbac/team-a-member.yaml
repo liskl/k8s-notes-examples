@@ -1,0 +1,30 @@
+# Chapter 11: what a member of team-a may read beside the request itself. One Secret by name, the app
+# role's, and the namespace's Events. Not Secrets in general: the admin Secret in the same namespace
+# holds the superuser's password.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: appdatabase-member
+  namespace: team-a
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  resourceNames: ["orders-app-conn"]
+  verbs: ["get"]
+- apiGroups: ["", "events.k8s.io"]
+  resources: ["events"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: appdatabase-member
+  namespace: team-a
+subjects:
+- kind: ServiceAccount
+  name: dev
+  namespace: team-a
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: appdatabase-member

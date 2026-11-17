@@ -1,0 +1,12 @@
+# Chapter 13: a second request of team-a's, a database nobody will miss. The chapter takes it out of Git
+# again (tenants/v3) to show what prune does to a request, and so to its data.
+apiVersion: platform.k8s-notes.example/v1
+kind: AppDatabase
+metadata:
+  name: scratch
+  namespace: team-a
+spec:
+  storage: 1Gi
+  schemas:
+  - name: tmp
+    access: write

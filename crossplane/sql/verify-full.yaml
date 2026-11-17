@@ -1,0 +1,24 @@
+# Chapter 5, a throwaway: the same ProviderConfig with no sslMode, so the API server fills in the
+# default (verify-full), and one Database through it. It cannot connect: the provider has no
+# CA to check the server's certificate against. The step deletes both.
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: pg-verify
+  namespace: data
+spec:
+  credentials:
+    source: PostgreSQLConnectionSecret
+    connectionSecretRef:
+      name: pg-admin
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Database
+metadata:
+  name: tls-probe
+  namespace: data
+spec:
+  providerConfigRef:
+    kind: ProviderConfig
+    name: pg-verify
+  forProvider: {}

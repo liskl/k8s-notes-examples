@@ -1,0 +1,9 @@
+# Chapter 13: a second, one-node kind cluster for the GitOps chapter, on the node image the lab uses, by
+# digest. Flux installs Crossplane here from nothing, which the lab cannot show: it already runs it.
+# Create it with --kubeconfig pointing at a file of its own; the chapter deletes it at its end.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: gitops
+nodes:
+- role: control-plane
+  image: kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5

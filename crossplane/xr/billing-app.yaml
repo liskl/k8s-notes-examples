@@ -1,0 +1,14 @@
+# Chapter 11: the second team's request: a database with one schema to write in, and the app in front
+# of it. This one stays to the end of the book.
+apiVersion: platform.k8s-notes.example/v1
+kind: AppDatabase
+metadata:
+  name: billing
+  namespace: team-b
+spec:
+  storage: 1Gi
+  app:
+    schema: ledger
+  schemas:
+  - name: ledger
+    access: write

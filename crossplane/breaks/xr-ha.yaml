@@ -1,0 +1,15 @@
+# Chapter 14: the chapter's throwaway request, on the Composition with two instances. Most of the
+# chapter's breaks happen to it, so that the two real requests are left alone.
+apiVersion: platform.k8s-notes.example/v1
+kind: AppDatabase
+metadata:
+  name: ha
+  namespace: team-d
+spec:
+  crossplane:
+    compositionRef:
+      name: appdatabase-ha
+  storage: 1Gi
+  schemas:
+  - name: main
+    access: write

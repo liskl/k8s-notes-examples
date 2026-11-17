@@ -1,0 +1,9 @@
+# Chapter 10: the book's own composition function, written in Go (its source is in ../function/). It is
+# a package like the other five, pinned by tag and digest, pulled from ghcr.io with no login.
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-appdb-schemas
+spec:
+  package: "ghcr.io/liskl/k8s-notes-examples/function-appdb-schemas:v1.0.1@sha256:\
+    d94c3606b5210b57ae9e8f3620df4e3293b84549aa99f8eca84b2aad68ad34b6"

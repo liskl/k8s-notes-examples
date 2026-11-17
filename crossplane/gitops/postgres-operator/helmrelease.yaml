@@ -1,0 +1,27 @@
+# Chapter 13: chapter 5's helm install as an object. Chart 0.29.1 (the operator 1.30.1) with the value of
+# ../../values/cnpg.yaml, the operator's image by tag and digest. The chart carries its CRDs in a
+# template, so Helm installs and upgrades them with the release.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cnpg
+  namespace: cnpg-system
+spec:
+  interval: 1h
+  releaseName: cnpg
+  chart:
+    spec:
+      chart: cloudnative-pg
+      version: 0.29.1
+      sourceRef:
+        kind: HelmRepository
+        name: cnpg
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    image:
+      tag: "1.30.1@sha256:923c267ec29636db3bee20f993d0ec4973fa22998e1adad37da79e4d32b5bc07"

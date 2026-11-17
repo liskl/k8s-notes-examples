@@ -1,0 +1,21 @@
+# Chapter 11: a second account in team-a with Kubernetes' own ClusterRole "edit" in the namespace, a
+# binding many clusters hand out. The chapter shows what that means beside an AppDatabase, then deletes it.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: lead
+  namespace: team-a
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lead-edit
+  namespace: team-a
+subjects:
+- kind: ServiceAccount
+  name: lead
+  namespace: team-a
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: edit

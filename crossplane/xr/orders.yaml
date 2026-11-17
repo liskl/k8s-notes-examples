@@ -1,0 +1,9 @@
+# Chapter 7: what a team writes. One small object in the team's own namespace asks the platform for a
+# database. It names no Composition, no provider and no password.
+apiVersion: platform.k8s-notes.example/v1alpha1
+kind: AppDatabase
+metadata:
+  name: orders
+  namespace: team-a
+spec:
+  storage: 1Gi

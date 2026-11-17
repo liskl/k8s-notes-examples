@@ -1,0 +1,154 @@
+# Chapter 6, throwaways: what provider-sql can and cannot do when it logs in as xp-narrow, a role with
+# CREATEDB and CREATEROLE and no superuser. A ProviderConfig on that role's Secret, and one or two managed
+# resources of each kind through it: one that such a role may make, and one that needs more.
+# The label lets one command list them. The step removes them all.
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: narrow
+  namespace: data
+spec:
+  sslMode: require
+  credentials:
+    source: PostgreSQLConnectionSecret
+    connectionSecretRef:
+      name: xp-narrow
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Role
+metadata:
+  name: narrow-owner
+  namespace: data
+  labels: {try: narrow}
+spec:
+  providerConfigRef: {kind: ProviderConfig, name: narrow}
+  forProvider:
+    privileges: {login: true}
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Database
+metadata:
+  name: narrow-db
+  namespace: data
+  labels: {try: narrow}
+spec:
+  providerConfigRef: {kind: ProviderConfig, name: narrow}
+  forProvider: {}
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Database
+metadata:
+  name: narrow-owned
+  namespace: data
+  labels: {try: narrow}
+spec:
+  providerConfigRef: {kind: ProviderConfig, name: narrow}
+  forProvider:
+    owner: narrow-owner
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Schema
+metadata:
+  name: narrow-own
+  namespace: data
+  labels: {try: narrow}
+spec:
+  providerConfigRef: {kind: ProviderConfig, name: narrow}
+  forProvider:
+    databaseRef: {name: narrow-db}
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Schema
+metadata:
+  name: narrow-given
+  namespace: data
+  labels: {try: narrow}
+spec:
+  providerConfigRef: {kind: ProviderConfig, name: narrow}
+  forProvider:
+    databaseRef: {name: narrow-db}
+    roleRef: {name: narrow-owner}
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Grant
+metadata:
+  name: narrow-usage
+  namespace: data
+  labels: {try: narrow}
+spec:
+  providerConfigRef: {kind: ProviderConfig, name: narrow}
+  forProvider:
+    privileges: [USAGE]
+    databaseRef: {name: narrow-db}
+    schema: narrow-own
+    roleRef: {name: narrow-owner}
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Grant
+metadata:
+  name: narrow-foreign
+  namespace: data
+  labels: {try: narrow}
+spec:
+  providerConfigRef: {kind: ProviderConfig, name: narrow}
+  forProvider:
+    privileges: [CREATE]
+    database: app
+    schema: public
+    roleRef: {name: narrow-owner}
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Extension
+metadata:
+  name: narrow-pgcrypto
+  namespace: data
+  labels: {try: narrow}
+spec:
+  providerConfigRef: {kind: ProviderConfig, name: narrow}
+  forProvider:
+    extension: pgcrypto
+    databaseRef: {name: narrow-db}
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Extension
+metadata:
+  name: narrow-buffercache
+  namespace: data
+  labels: {try: narrow}
+spec:
+  providerConfigRef: {kind: ProviderConfig, name: narrow}
+  forProvider:
+    extension: pg_buffercache
+    databaseRef: {name: narrow-db}
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: DefaultPrivileges
+metadata:
+  name: narrow-dp-self
+  namespace: data
+  labels: {try: narrow}
+spec:
+  providerConfigRef: {kind: ProviderConfig, name: narrow}
+  forProvider:
+    targetRole: xp-narrow
+    objectType: table
+    privileges: [SELECT]
+    schema: narrow-own
+    databaseRef: {name: narrow-db}
+    roleRef: {name: narrow-owner}
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: DefaultPrivileges
+metadata:
+  name: narrow-dp-postgres
+  namespace: data
+  labels: {try: narrow}
+spec:
+  providerConfigRef: {kind: ProviderConfig, name: narrow}
+  forProvider:
+    targetRole: postgres
+    objectType: table
+    privileges: [SELECT]
+    schema: narrow-own
+    databaseRef: {name: narrow-db}
+    roleRef: {name: narrow-owner}

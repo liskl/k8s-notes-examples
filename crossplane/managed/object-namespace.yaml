@@ -1,0 +1,17 @@
+# A namespaced Object that asks for a cluster-scoped thing, a Namespace. Nothing in the Object's own
+# namespace stops it: only the provider account's RBAC does (chapter 3 leaves it refused).
+apiVersion: kubernetes.m.crossplane.io/v1alpha1
+kind: Object
+metadata:
+  name: escape
+  namespace: sandbox
+spec:
+  providerConfigRef:
+    kind: ProviderConfig
+    name: in-cluster
+  forProvider:
+    manifest:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: not-sandbox

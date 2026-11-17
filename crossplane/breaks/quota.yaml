@@ -1,0 +1,10 @@
+# Chapter 14: a quota a cluster admin might set on a team's namespace, too small for a database: no Pod
+# at all. Nothing of Crossplane's reads it. The chapter follows a request that is not ready down to it.
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: no-pods
+  namespace: team-d
+spec:
+  hard:
+    pods: "0"

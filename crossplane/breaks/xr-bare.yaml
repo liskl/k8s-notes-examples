@@ -1,0 +1,11 @@
+# Chapter 10: a throwaway request with no schemas, for the Composition appdatabase-bare. It asks for
+# nothing of its own: the one thing to watch is the ConfigMap that the Composition's first step makes.
+apiVersion: platform.k8s-notes.example/v1
+kind: AppDatabase
+metadata:
+  name: bare
+  namespace: team-a
+spec:
+  crossplane:
+    compositionRef:
+      name: appdatabase-bare

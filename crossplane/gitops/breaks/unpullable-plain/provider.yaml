@@ -1,0 +1,9 @@
+# Chapter 13: a Provider that can never install: provider-nop's name with a digest that does not exist.
+# Chapter 2 showed what Crossplane says about it; here the question is what Flux says.
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-unpullable-plain
+spec:
+  package: "xpkg.crossplane.io/crossplane-contrib/provider-nop:v0.6.0@sha256:\
+    0000000000000000000000000000000000000000000000000000000000000001"

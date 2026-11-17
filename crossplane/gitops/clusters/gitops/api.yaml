@@ -1,0 +1,26 @@
+# Layer 4: the platform's API: the XRD, its Composition, the EnvironmentConfig, the ClusterRole that lets
+# the core compose CloudNativePG Clusters, and the team's account. The Composition names functions, so the
+# packages come first; the account lives in the namespace the configs layer makes. The expression holds
+# this layer until the XRD is Established, which is when the kind AppDatabase exists.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: api
+  namespace: flux-system
+spec:
+  dependsOn:
+  - name: packages
+  - name: configs
+  interval: 10m
+  retryInterval: 30s
+  timeout: 2m
+  sourceRef:
+    kind: GitRepository
+    name: examples
+  path: ./crossplane/gitops/api
+  prune: true
+  wait: true
+  healthCheckExprs:
+  - apiVersion: apiextensions.crossplane.io/v2
+    kind: CompositeResourceDefinition
+    current: status.conditions.exists(e, e.type == 'Established' && e.status == 'True')

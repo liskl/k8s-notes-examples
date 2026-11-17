@@ -1,0 +1,65 @@
+# Chapter 5: the book's demo app in front of the database orders. It logs in as the role orders-app with
+# the Secret provider-sql wrote for that role, and works in the schema sales. The host is the Service's
+# full name. Everything here passes the restricted Pod Security level.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+  namespace: data
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: web
+        image: "ghcr.io/liskl/k8s-notes-examples/crossplane-demo:1.0.0@sha256:\
+          375c9f59ce8738e7933b4a550988a3b2b30f6bee113b15ae37740d6920b1f4ce"
+        args: ["web"]
+        ports:
+        - name: http
+          containerPort: 8080
+        env:
+        - name: PGHOST
+          value: pg-rw.data.svc
+        - name: PGDATABASE
+          value: orders
+        - name: PGSSLMODE
+          value: require
+        - name: DEMO_SCHEMA
+          value: sales
+        - name: PGPORT
+          valueFrom: {secretKeyRef: {name: orders-app-conn, key: port}}
+        - name: PGUSER
+          valueFrom: {secretKeyRef: {name: orders-app-conn, key: username}}
+        - name: PGPASSWORD
+          valueFrom: {secretKeyRef: {name: orders-app-conn, key: password}}
+        readinessProbe:
+          httpGet: {path: /healthz, port: http}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo
+  namespace: data
+spec:
+  selector:
+    app: demo
+  ports:
+  - name: http
+    port: 80
+    targetPort: http

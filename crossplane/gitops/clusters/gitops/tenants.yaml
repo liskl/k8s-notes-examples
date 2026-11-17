@@ -1,0 +1,26 @@
+# Layer 6: the teams' requests. They need the API (the kind) and the operator (what the kind composes).
+# A new AppDatabase has no conditions for a moment, and Flux would call that healthy: the expression
+# holds this layer until every request says Ready True. prune: true means a request taken out of Git is
+# deleted from the cluster, and its database with it.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: tenants
+  namespace: flux-system
+spec:
+  dependsOn:
+  - name: api
+  - name: postgres-operator
+  interval: 10m
+  retryInterval: 30s
+  timeout: 15m
+  sourceRef:
+    kind: GitRepository
+    name: examples
+  path: ./crossplane/gitops/tenants/v1
+  prune: true
+  wait: true
+  healthCheckExprs:
+  - apiVersion: platform.k8s-notes.example/v1
+    kind: AppDatabase
+    current: status.conditions.exists(e, e.type == 'Ready' && e.status == 'True')

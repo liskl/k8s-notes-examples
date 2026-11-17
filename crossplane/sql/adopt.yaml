@@ -1,0 +1,16 @@
+# Chapter 6: adopting a database that someone made by hand. The annotation carries the name it has in
+# PostgreSQL (an underscore cannot be in a Kubernetes name). With the policy Observe alone the provider
+# reads it and changes nothing.
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Database
+metadata:
+  name: legacy-orders
+  namespace: data
+  annotations:
+    crossplane.io/external-name: legacy_orders
+spec:
+  managementPolicies: ["Observe"]
+  providerConfigRef:
+    kind: ProviderConfig
+    name: pg
+  forProvider: {}

@@ -1,0 +1,17 @@
+# Layer 1: Crossplane's core, from its Helm chart. It depends on nothing. wait: true holds this
+# Kustomization until the HelmRelease is Ready, and the HelmRelease until the chart's Deployments are.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: core
+  namespace: flux-system
+spec:
+  interval: 10m
+  retryInterval: 30s
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: examples
+  path: ./crossplane/gitops/core
+  prune: true
+  wait: true

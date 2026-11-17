@@ -1,0 +1,41 @@
+# Chapter 14: the cure for the version break: the XRD again, with one schema for both versions. The
+# old version now knows the field too, so an object made at either version may hold it.
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: notes.platform.k8s-notes.example
+spec:
+  scope: Namespaced
+  group: platform.k8s-notes.example
+  names:
+    kind: Note
+    plural: notes
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: false
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              text:
+                type: string
+              author:
+                type: string
+  - name: v1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              text:
+                type: string
+              author:
+                type: string

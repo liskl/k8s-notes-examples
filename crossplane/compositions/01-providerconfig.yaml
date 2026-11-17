@@ -1,0 +1,40 @@
+# Chapter 8, stage 1: the smallest Composition. One step, one function, one resource: the
+# ProviderConfig that provider-sql will use for this AppDatabase. Two patches copy the XR's name into it,
+# the second through a transform.
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: appdatabase
+spec:
+  compositeTypeRef:
+    apiVersion: platform.k8s-notes.example/v1
+    kind: AppDatabase
+  mode: Pipeline
+  pipeline:
+  - step: compose
+    functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+      - name: providerconfig
+        base:
+          apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+          kind: ProviderConfig
+          spec:
+            sslMode: require
+            credentials:
+              source: PostgreSQLConnectionSecret
+        patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: spec.credentials.connectionSecretRef.name
+          transforms:
+          - type: string
+            string:
+              type: Format
+              fmt: "%s-admin"

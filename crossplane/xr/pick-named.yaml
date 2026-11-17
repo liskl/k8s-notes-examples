@@ -1,0 +1,13 @@
+# Chapter 11: the same throwaway request, naming the sketch Composition outright. Used once, against an
+# XRD that enforces another.
+apiVersion: platform.k8s-notes.example/v1
+kind: AppDatabase
+metadata:
+  name: pick-named
+  namespace: team-c
+spec:
+  crossplane:
+    compositionRef:
+      name: appdatabase-sketch
+  schemas:
+  - name: notes

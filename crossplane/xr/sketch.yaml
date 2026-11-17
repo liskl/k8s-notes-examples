@@ -1,0 +1,11 @@
+# Chapter 8: an AppDatabase that names its Composition. It gets the sketch, one ConfigMap, and no database.
+apiVersion: platform.k8s-notes.example/v1
+kind: AppDatabase
+metadata:
+  name: sketch
+  namespace: team-a
+spec:
+  storage: 1Gi
+  crossplane:
+    compositionRef:
+      name: appdatabase-sketch

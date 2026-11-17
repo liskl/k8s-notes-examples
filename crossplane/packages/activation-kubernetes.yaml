@@ -1,0 +1,9 @@
+# The activation policy for provider-kubernetes: only the namespaced Object. The legacy cluster-scoped
+# Object and both ObservedObjectCollection kinds stay switched off (chapter 3).
+apiVersion: apiextensions.crossplane.io/v1alpha1
+kind: ManagedResourceActivationPolicy
+metadata:
+  name: kubernetes
+spec:
+  activate:
+  - objects.kubernetes.m.crossplane.io

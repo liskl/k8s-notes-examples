@@ -1,0 +1,73 @@
+# Chapter 8, stage 3: who says ready. patch-and-transform judges its own resources: by default it
+# waits for a Ready condition, which a ProviderConfig never has, so its check is set to None. Nobody judges
+# the template's Secret, so function-auto-ready goes last and judges whatever is left.
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: appdatabase
+spec:
+  compositeTypeRef:
+    apiVersion: platform.k8s-notes.example/v1
+    kind: AppDatabase
+  mode: Pipeline
+  pipeline:
+  - step: secret
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+          {{- $xr := .observed.composite.resource }}
+          {{- $pw := randAlphaNum 32 }}
+          {{- with .observed.resources }}{{ with (index . "admin") }}
+          {{- with .resource.data.password }}{{ $pw = . | b64dec }}{{ end }}
+          {{- end }}{{ end }}
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: {{ $xr.metadata.name }}-admin
+            labels:
+              cnpg.io/reload: "true"
+            annotations:
+              {{ setResourceNameAnnotation "admin" }}
+          type: kubernetes.io/basic-auth
+          stringData:
+            username: postgres
+            password: {{ $pw | quote }}
+            endpoint: {{ $xr.metadata.name }}-rw.{{ $xr.metadata.namespace }}.svc
+            port: "5432"
+  - step: compose
+    functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+      - name: providerconfig
+        base:
+          apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+          kind: ProviderConfig
+          spec:
+            sslMode: require
+            credentials:
+              source: PostgreSQLConnectionSecret
+        patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: spec.credentials.connectionSecretRef.name
+          transforms:
+          - type: string
+            string:
+              type: Format
+              fmt: "%s-admin"
+        readinessChecks:
+        - type: None
+  - step: ready
+    functionRef:
+      name: function-auto-ready

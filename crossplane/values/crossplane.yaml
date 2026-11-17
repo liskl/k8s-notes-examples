@@ -1,0 +1,9 @@
+# Field Guide 08: values for the crossplane chart 2.4.3. Pass this file on every helm upgrade too: Helm
+# starts each upgrade from the chart's defaults.
+image:
+  # the tag for people, the digest for the cluster (the multi-arch index of v2.4.3)
+  tag: v2.4.3@sha256:1c66261d805a73cade46e2ac94b665c73aebd4a00844de5fcae4bcadaa2be638
+provider:
+  # No default activation policy: a provider that supports safe start waits until the book's own
+  # ManagedResourceActivationPolicy names one of its kinds (chapter 2).
+  defaultActivations: []

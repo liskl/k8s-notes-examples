@@ -1,0 +1,23 @@
+# Chapter 12: a runtime config that sizes a function. Two replicas, requests and limits for its container
+# (a package's runtime has none unless a config says so), and --debug kept, so that each replica's log
+# shows the calls it served.
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: function-sized
+spec:
+  deploymentTemplate:
+    spec:
+      replicas: 2
+      selector: {}
+      template:
+        spec:
+          containers:
+          - name: package-runtime
+            args: ["--debug"]
+            resources:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                memory: 128Mi

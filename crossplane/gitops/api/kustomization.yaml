@@ -1,0 +1,9 @@
+# Layer 4: the platform's API, from the files chapters 7 to 11 ended on.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../../api/xrd-default.yaml
+- ../../compositions/14-tuned.yaml
+- ../../api/environment.yaml
+- ../../rbac/compose-cnpg.yaml
+- ../../rbac/team-a.yaml

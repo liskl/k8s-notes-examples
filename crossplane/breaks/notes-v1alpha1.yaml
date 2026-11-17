@@ -1,0 +1,53 @@
+# Chapter 14: a second, tiny API to break in peace: Note, with one field, at one version. Its
+# Composition makes one ConfigMap from the field. The next file gives the kind a second version.
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: notes.platform.k8s-notes.example
+spec:
+  scope: Namespaced
+  group: platform.k8s-notes.example
+  names:
+    kind: Note
+    plural: notes
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              text:
+                type: string
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: note
+spec:
+  compositeTypeRef:
+    apiVersion: platform.k8s-notes.example/v1alpha1
+    kind: Note
+  mode: Pipeline
+  pipeline:
+  - step: compose
+    functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+      - name: text
+        base:
+          apiVersion: v1
+          kind: ConfigMap
+        patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.text
+          toFieldPath: data.text
+        readinessChecks:
+        - type: None

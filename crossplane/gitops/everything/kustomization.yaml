@@ -1,0 +1,11 @@
+# Chapter 13, the wrong way: every layer in one list. Kustomize builds it without complaint; the cluster
+# cannot take it (flux/everything.yaml).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../core
+- ../packages
+- ../configs
+- ../api
+- ../postgres-operator
+- ../tenants/v1

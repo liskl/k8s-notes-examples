@@ -1,0 +1,14 @@
+# Chapter 13: the hub as it would be one commit later. The same six Kustomizations, with the tenants
+# layer reading tenants/v2. The book pushes nothing to Git, so a change of path stands in for a commit.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../gitops
+patches:
+- target:
+    kind: Kustomization
+    name: tenants
+  patch: |
+    - op: replace
+      path: /spec/path
+      value: ./crossplane/gitops/tenants/v2

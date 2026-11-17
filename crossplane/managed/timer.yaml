@@ -1,0 +1,21 @@
+# A NopResource: a managed resource with nothing behind it. Its conditionAfter list is a script for its own
+# Ready condition, read against its age: not ready at first, ready after 30 seconds. Chapter 3 uses it to
+# show what every managed resource has, with nothing at stake.
+apiVersion: nop.crossplane.io/v1alpha1
+kind: NopResource
+metadata:
+  name: timer
+  namespace: sandbox
+spec:
+  forProvider:
+    conditionAfter:
+    - time: 0s
+      conditionType: Ready
+      conditionStatus: "False"
+      conditionReason: Creating
+    - time: 30s
+      conditionType: Ready
+      conditionStatus: "True"
+      conditionReason: Available
+    fields:
+      colour: blue

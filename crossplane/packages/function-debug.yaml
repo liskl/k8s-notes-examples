@@ -1,0 +1,15 @@
+# Chapter 10: a runtime config that starts a function with --debug, so that it logs every request it
+# serves. A Function names it in spec.runtimeConfigRef; the change makes a new revision and a new Pod.
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: function-debug
+spec:
+  deploymentTemplate:
+    spec:
+      selector: {}
+      template:
+        spec:
+          containers:
+          - name: package-runtime
+            args: ["--debug"]

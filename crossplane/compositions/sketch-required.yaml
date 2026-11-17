@@ -1,0 +1,59 @@
+# Chapter 8: a second Composition for the same kind, to try patches on something that costs nothing: one
+# ConfigMap. An XR gets it only by naming it in spec.crossplane.compositionRef. The last patch has a typo
+# in its fromFieldPath, on purpose.
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: appdatabase-sketch
+spec:
+  compositeTypeRef:
+    apiVersion: platform.k8s-notes.example/v1
+    kind: AppDatabase
+  mode: Pipeline
+  pipeline:
+  - step: compose
+    functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+      - name: note
+        base:
+          apiVersion: v1
+          kind: ConfigMap
+          data:
+            made-by: the sketch Composition
+        patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.storage
+          toFieldPath: data.storage
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.storage
+          toFieldPath: data.size
+          transforms:
+          - type: map
+            map:
+              1Gi: small
+              2Gi: medium
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.storage
+          toFieldPath: data.bytes
+          transforms:
+          - type: convert
+            convert:
+              toType: float64
+              format: quantity
+          - type: convert
+            convert:
+              toType: int64
+          - type: convert
+            convert:
+              toType: string
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.storrage
+          toFieldPath: data.typo
+          policy:
+            fromFieldPath: Required
+        readinessChecks:
+        - type: None

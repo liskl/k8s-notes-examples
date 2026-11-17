@@ -1,0 +1,20 @@
+# Chapter 10: a throwaway Composition whose one step asks the book's function to panic (the input
+# "break: panic", made for this page). An XR must name it in spec.crossplane.compositionRef. The panic
+# ends the function's process, for every Composition that uses it.
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: appdatabase-crash
+spec:
+  compositeTypeRef:
+    apiVersion: platform.k8s-notes.example/v1
+    kind: AppDatabase
+  mode: Pipeline
+  pipeline:
+  - step: schemas
+    functionRef:
+      name: function-appdb-schemas
+    input:
+      apiVersion: appdbschemas.fn.k8s-notes.example/v1beta1
+      kind: Input
+      break: panic

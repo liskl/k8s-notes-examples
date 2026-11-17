@@ -1,0 +1,10 @@
+# An activation policy: the kinds named here become real CustomResourceDefinitions, and a provider that
+# waits for one (safe start) starts running. The namespaced NopResource only: the cluster-scoped
+# ClusterNopResource stays switched off.
+apiVersion: apiextensions.crossplane.io/v1alpha1
+kind: ManagedResourceActivationPolicy
+metadata:
+  name: nop
+spec:
+  activate:
+  - nopresources.nop.crossplane.io

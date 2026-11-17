@@ -1,0 +1,41 @@
+# Layer 2: providers, functions, a runtime config and an activation policy. The kinds Provider and
+# Function exist only once the core has started, hence dependsOn. Flux cannot read a package's health by
+# itself (it looks for a condition named Ready, and packages have Installed and Healthy), so
+# healthCheckExprs tells it what healthy means. healthChecks names what to wait for: every package, and
+# the CustomResourceDefinition of provider-kubernetes's ProviderConfig, which the next layer's object
+# needs. A list under healthChecks is used in place of wait: true, which would ignore it.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: packages
+  namespace: flux-system
+spec:
+  dependsOn:
+  - name: core
+  interval: 10m
+  retryInterval: 30s
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: examples
+  path: ./crossplane/gitops/packages
+  prune: true
+  healthCheckExprs:
+  - apiVersion: pkg.crossplane.io/v1
+    kind: Provider
+    current: status.conditions.exists(e, e.type == 'Healthy' && e.status == 'True')
+  - apiVersion: pkg.crossplane.io/v1
+    kind: Function
+    current: status.conditions.exists(e, e.type == 'Healthy' && e.status == 'True')
+  healthChecks:
+  - {apiVersion: pkg.crossplane.io/v1, kind: Provider, name: provider-sql}
+  - {apiVersion: pkg.crossplane.io/v1, kind: Provider, name: provider-kubernetes}
+  - {apiVersion: pkg.crossplane.io/v1, kind: Function, name: function-patch-and-transform}
+  - {apiVersion: pkg.crossplane.io/v1, kind: Function, name: function-go-templating}
+  - {apiVersion: pkg.crossplane.io/v1, kind: Function, name: function-auto-ready}
+  - {apiVersion: pkg.crossplane.io/v1, kind: Function, name: function-sequencer}
+  - {apiVersion: pkg.crossplane.io/v1, kind: Function, name: function-environment-configs}
+  - {apiVersion: pkg.crossplane.io/v1, kind: Function, name: function-appdb-schemas}
+  - apiVersion: apiextensions.k8s.io/v1
+    kind: CustomResourceDefinition
+    name: providerconfigs.kubernetes.m.crossplane.io

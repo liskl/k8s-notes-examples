@@ -1,0 +1,6 @@
+# Layer 3: a team's namespace, and a ProviderConfig in it.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- team-a.yaml
+- provider-config.yaml

@@ -1,0 +1,17 @@
+# Chapter 13, the right way: one Kustomization that holds nothing but six more, a layer each
+# (clusters/gitops/). Applied by hand, once. Its path is the one thing the chapter changes by hand later,
+# to stand in for a commit: clusters/gitops-v2 and so on differ only in which tenants folder they name.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: hub
+  namespace: flux-system
+spec:
+  interval: 10m
+  retryInterval: 30s
+  timeout: 2m
+  sourceRef:
+    kind: GitRepository
+    name: examples
+  path: ./crossplane/gitops/clusters/gitops
+  prune: true

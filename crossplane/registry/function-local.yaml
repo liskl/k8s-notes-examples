@@ -1,0 +1,8 @@
+# Chapter 10: the package you built, installed from the lab's own registry by the Service's address.
+# It has its own name and its own source, so it lives beside the published function.
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-appdb-schemas-local
+spec:
+  package: 10.96.200.10:5000/function-appdb-schemas:v0.0.1

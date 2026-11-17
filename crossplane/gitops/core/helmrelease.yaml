@@ -1,0 +1,28 @@
+# Chapter 13: chapter 1's helm install as an object. Chart 2.4.3 exactly, with the two values of
+# ../../values/crossplane.yaml: the image by tag and digest, and no default activation policy.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: crossplane
+  namespace: crossplane-system
+spec:
+  interval: 1h
+  releaseName: crossplane
+  chart:
+    spec:
+      chart: crossplane
+      version: 2.4.3
+      sourceRef:
+        kind: HelmRepository
+        name: crossplane-stable
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    image:
+      tag: v2.4.3@sha256:1c66261d805a73cade46e2ac94b665c73aebd4a00844de5fcae4bcadaa2be638
+    provider:
+      defaultActivations: []

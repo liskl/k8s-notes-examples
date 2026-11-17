@@ -1,0 +1,9 @@
+# provider-nop: a provider that manages nothing. Its one kind, NopResource, only keeps time, which makes it
+# the safe place to learn what a package and a managed resource do. Pinned by tag and by digest: the tag is
+# for people, the digest is what the cluster pulls.
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-nop
+spec:
+  package: xpkg.crossplane.io/crossplane-contrib/provider-nop:v0.6.0@sha256:714fb0496f607c6b38c0bafad7e49dddd5c604c08f5883d61985f89b4b0923c2

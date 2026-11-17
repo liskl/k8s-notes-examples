@@ -1,0 +1,17 @@
+# Chapter 11: a throwaway namespace where the platform allows no schema at all (maxSchemas 0). A request
+# made here on the real Composition stops at its limits step and composes nothing, which makes it a cheap
+# place to watch which Composition a request picks.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-c
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: appdatabase-limits
+  namespace: team-c
+data:
+  maxSchemas: "0"

@@ -1,0 +1,15 @@
+# A NopResource whose every delete fails with the message in deleteError. Chapter 3 deletes it to show a
+# managed resource that will not go, and what an honest fix looks like.
+apiVersion: nop.crossplane.io/v1alpha1
+kind: NopResource
+metadata:
+  name: stubborn
+  namespace: sandbox
+spec:
+  forProvider:
+    deleteError: the thing outside says no
+    conditionAfter:
+    - time: 0s
+      conditionType: Ready
+      conditionStatus: "True"
+      conditionReason: Available

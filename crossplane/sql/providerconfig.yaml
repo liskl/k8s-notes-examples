@@ -1,0 +1,14 @@
+# Chapter 5: how provider-sql reaches the server. A namespaced ProviderConfig serves the managed resources
+# of its own namespace, and reads its Secret there too. sslMode require: the connection is encrypted, but
+# the server's certificate is not checked (the default, verify-full, needs a CA the config cannot carry).
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: pg
+  namespace: data
+spec:
+  sslMode: require
+  credentials:
+    source: PostgreSQLConnectionSecret
+    connectionSecretRef:
+      name: pg-admin

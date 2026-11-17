@@ -1,0 +1,12 @@
+# Chapter 9: a second team's first AppDatabase, made and deleted in the chapter. A new XR is the only kind
+# that meets a template's first pass, when nothing has been observed yet.
+apiVersion: platform.k8s-notes.example/v1
+kind: AppDatabase
+metadata:
+  name: billing
+  namespace: team-b
+spec:
+  storage: 1Gi
+  schemas:
+  - name: ledger
+    access: write

@@ -1,0 +1,16 @@
+# Chapter 10: the kubelet's half of a package from the lab's registry. The kubelet will not pull over
+# plain http, so the runtime image is loaded on to the nodes with kind and named here, in place of the
+# one inside the package.
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: function-local
+spec:
+  deploymentTemplate:
+    spec:
+      selector: {}
+      template:
+        spec:
+          containers:
+          - name: package-runtime
+            image: docker.io/library/fn-runtime:v0.0.1

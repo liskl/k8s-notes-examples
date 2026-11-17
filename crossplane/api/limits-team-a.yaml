@@ -1,0 +1,9 @@
+# Chapter 9: one team's limit, kept by the platform team in the team's namespace. The Composition's limits
+# step asks for this ConfigMap by name and reads maxSchemas from it.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: appdatabase-limits
+  namespace: team-a
+data:
+  maxSchemas: "2"
