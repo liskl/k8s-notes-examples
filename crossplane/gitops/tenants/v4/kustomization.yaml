@@ -1,0 +1,5 @@
+# Chapter 13, tenants/v4: orders is gone from the list too. Only the limit is left.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- limits.yaml

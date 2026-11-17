@@ -1,0 +1,34 @@
+# A Release: a managed resource of provider-helm. What it manages is one Helm release: the podinfo chart
+# 6.15.0 from its OCI registry, installed into sandbox with these values. The two security contexts let the
+# Pods pass the namespace's "restricted" Pod Security level (chapter 4).
+apiVersion: helm.m.crossplane.io/v1beta1
+kind: Release
+metadata:
+  name: demo
+  namespace: sandbox
+spec:
+  providerConfigRef:
+    kind: ProviderConfig
+    name: in-cluster
+  forProvider:
+    chart:
+      name: podinfo
+      repository: oci://ghcr.io/stefanprodan/charts
+      version: 6.15.0
+    namespace: sandbox
+    skipCreateNamespace: true
+    wait: true
+    waitTimeout: 2m
+    values:
+      replicaCount: 2
+      ui:
+        message: installed by a Release
+      podSecurityContext:
+        runAsNonRoot: true
+        runAsUser: 100
+        seccompProfile:
+          type: RuntimeDefault
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]

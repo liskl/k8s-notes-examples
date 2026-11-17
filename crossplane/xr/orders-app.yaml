@@ -1,0 +1,16 @@
+# Chapter 11: team-a's request with the app switched on. The app works in the schema sales, where its
+# role may write.
+apiVersion: platform.k8s-notes.example/v1
+kind: AppDatabase
+metadata:
+  name: orders
+  namespace: team-a
+spec:
+  storage: 1Gi
+  app:
+    schema: sales
+  schemas:
+  - name: sales
+    access: write
+  - name: audit
+    access: read

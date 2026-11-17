@@ -1,0 +1,16 @@
+# Chapter 11: why provider-sql's kinds are not for a team's members. This Role is no AppDatabase's part:
+# it is written by hand, names the team's ProviderConfig, and asks to be a superuser. The chapter makes
+# it once, as the platform team, and deletes it.
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Role
+metadata:
+  name: intruder
+  namespace: team-a
+spec:
+  providerConfigRef:
+    kind: ProviderConfig
+    name: orders
+  forProvider:
+    privileges:
+      login: true
+      superUser: true

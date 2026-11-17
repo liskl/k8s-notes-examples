@@ -1,0 +1,14 @@
+# Chapter 9: the same request at v1, now with schemas. The app's role may make tables in sales, and only
+# read in audit.
+apiVersion: platform.k8s-notes.example/v1
+kind: AppDatabase
+metadata:
+  name: orders
+  namespace: team-a
+spec:
+  storage: 1Gi
+  schemas:
+  - name: sales
+    access: write
+  - name: audit
+    access: read

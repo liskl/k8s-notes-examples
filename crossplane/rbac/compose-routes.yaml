@@ -1,0 +1,13 @@
+# Chapter 11: one more part for the core's ClusterRole, so that an AppDatabase may compose an HTTPRoute.
+# The label adds these rules to the ClusterRole "crossplane", as compose-cnpg.yaml did for Clusters.
+# Deployments and Services need no such part: the chart's own covers them.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: crossplane-compose-routes
+  labels:
+    rbac.crossplane.io/aggregate-to-crossplane: "true"
+rules:
+- apiGroups: ["gateway.networking.k8s.io"]
+  resources: ["httproutes", "httproutes/status"]
+  verbs: ["*"]

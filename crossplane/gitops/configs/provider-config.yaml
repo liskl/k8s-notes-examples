@@ -1,0 +1,12 @@
+# Chapter 13: a ProviderConfig for provider-kubernetes in the team's namespace, as chapter 3 made one
+# in sandbox: the provider acts there as itself. Nothing in this chapter uses it. It stands for every
+# ProviderConfig a platform keeps in Git, and its kind exists only once the provider's package is
+# healthy, which is why this layer waits for the packages.
+apiVersion: kubernetes.m.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: in-cluster
+  namespace: team-a
+spec:
+  credentials:
+    source: InjectedIdentity

@@ -1,0 +1,12 @@
+# Chapter 6, a throwaway: CloudNativePG's own Database kind, declaring a database named clash owned by
+# the role app. The same database is then declared to provider-sql with another owner (sql/clash.yaml).
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: clash
+  namespace: data
+spec:
+  cluster:
+    name: pg
+  name: clash
+  owner: app

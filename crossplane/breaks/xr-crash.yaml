@@ -1,0 +1,11 @@
+# Chapter 10: a throwaway request with no schemas, for the Composition appdatabase-crash. It asks for
+# nothing, so whatever the function does, no database is made.
+apiVersion: platform.k8s-notes.example/v1
+kind: AppDatabase
+metadata:
+  name: crash
+  namespace: team-a
+spec:
+  crossplane:
+    compositionRef:
+      name: appdatabase-crash

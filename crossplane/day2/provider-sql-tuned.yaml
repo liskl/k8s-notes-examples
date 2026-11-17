@@ -1,0 +1,22 @@
+# Chapter 12: a runtime config for provider-sql with two of its own flags and a size. --debug makes it
+# log every reconcile; --max-reconcile-rate caps how many reconciles a second it starts. Naming it in
+# the Provider makes a new revision and a new Pod, as chapter 6's faster poll did.
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: provider-sql-tuned
+spec:
+  deploymentTemplate:
+    spec:
+      selector: {}
+      template:
+        spec:
+          containers:
+          - name: package-runtime
+            args: ["--debug", "--max-reconcile-rate=5"]
+            resources:
+              requests:
+                cpu: 50m
+                memory: 128Mi
+              limits:
+                memory: 256Mi

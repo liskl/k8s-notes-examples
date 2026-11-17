@@ -1,0 +1,10 @@
+# Chapter 9: the smallest request a team could write, for rendering on a laptop. It leaves out everything
+# the XRD has a default for: the storage size and the schema's access.
+apiVersion: platform.k8s-notes.example/v1
+kind: AppDatabase
+metadata:
+  name: shop
+  namespace: team-c
+spec:
+  schemas:
+  - name: catalog

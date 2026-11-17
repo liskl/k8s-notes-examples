@@ -1,0 +1,17 @@
+# Layer 5: the CloudNativePG operator, from its Helm chart. It depends on nothing of Crossplane's and
+# installs beside the first layers.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: postgres-operator
+  namespace: flux-system
+spec:
+  interval: 10m
+  retryInterval: 30s
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: examples
+  path: ./crossplane/gitops/postgres-operator
+  prune: true
+  wait: true

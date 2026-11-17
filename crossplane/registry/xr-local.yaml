@@ -1,0 +1,11 @@
+# Chapter 10: a throwaway request with no schemas, for the Composition appdatabase-local. The function
+# has nothing to compose for it and says so in an Event, which is all the page needs.
+apiVersion: platform.k8s-notes.example/v1
+kind: AppDatabase
+metadata:
+  name: local
+  namespace: team-a
+spec:
+  crossplane:
+    compositionRef:
+      name: appdatabase-local

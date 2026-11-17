@@ -1,0 +1,13 @@
+# Chapter 8: lets Crossplane's core compose a kind no provider owns. The label adds these rules to the
+# ClusterRole "crossplane", which the core's own account is bound to: CloudNativePG Clusters, and their
+# status, which the core asks about too. Nothing is restarted.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: crossplane-compose-cnpg
+  labels:
+    rbac.crossplane.io/aggregate-to-crossplane: "true"
+rules:
+- apiGroups: ["postgresql.cnpg.io"]
+  resources: ["clusters", "clusters/status"]
+  verbs: ["*"]

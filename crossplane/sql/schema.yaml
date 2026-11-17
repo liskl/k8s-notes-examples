@@ -1,0 +1,16 @@
+# Chapter 5: a schema in the database orders, owned by the app's role. The two references name the
+# managed resources, and the provider writes the real names beside them.
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Schema
+metadata:
+  name: sales
+  namespace: data
+spec:
+  providerConfigRef:
+    kind: ProviderConfig
+    name: pg
+  forProvider:
+    databaseRef:
+      name: orders
+    roleRef:
+      name: orders-app

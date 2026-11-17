@@ -1,0 +1,21 @@
+# Chapter 5: default privileges. Every table that postgres makes in the schema sales from now on can be
+# read by the app's role. It changes nothing about tables that already exist.
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: DefaultPrivileges
+metadata:
+  name: sales-tables
+  namespace: data
+spec:
+  providerConfigRef:
+    kind: ProviderConfig
+    name: pg
+  forProvider:
+    targetRole: postgres
+    objectType: table
+    privileges:
+    - SELECT
+    schema: sales
+    databaseRef:
+      name: orders
+    roleRef:
+      name: orders-app

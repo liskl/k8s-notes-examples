@@ -1,0 +1,66 @@
+# Chapter 10: a registry inside the lab, for a package you built yourself. One Pod with no storage of
+# its own (what you push is gone when it stops), and a Service on a fixed address, because Crossplane's
+# core and the kubelet will be given that address in an image name. Nothing here leaves the cluster.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: registry
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: registry
+  namespace: registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: registry
+  template:
+    metadata:
+      labels:
+        app: registry
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: registry
+        image: "docker.io/library/registry:2.8.3@sha256:\
+          a3d8aaa63ed8681a604f1dea0aa03f100d5895b6a58ace528858a7b332415373"
+        ports:
+        - name: http
+          containerPort: 5000
+        readinessProbe:
+          httpGet: {path: /v2/, port: http}
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/registry
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+      volumes:
+      - name: data
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry
+  namespace: registry
+spec:
+  clusterIP: 10.96.200.10
+  selector:
+    app: registry
+  ports:
+  - name: http
+    port: 5000
+    targetPort: http

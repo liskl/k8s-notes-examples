@@ -1,0 +1,7 @@
+# Layer 5: the CloudNativePG operator.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- namespace.yaml
+- helmrepository.yaml
+- helmrelease.yaml

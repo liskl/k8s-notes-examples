@@ -1,0 +1,20 @@
+# Chapter 13: Flux, asked for through the Flux Operator (Field Guide 01's way). The newest Flux 2.10 the
+# operator v0.62.1 carries, and only the three controllers this chapter uses. It has no sync: the chapter
+# applies the source and the first Kustomization by hand, so that each can be seen alone.
+apiVersion: fluxcd.controlplane.io/v1
+kind: FluxInstance
+metadata:
+  name: flux
+  namespace: flux-system
+spec:
+  distribution:
+    version: "2.10.x"
+    registry: ghcr.io/fluxcd
+  components:
+  - source-controller
+  - kustomize-controller
+  - helm-controller
+  cluster:
+    type: kubernetes
+    size: small
+    networkPolicy: true

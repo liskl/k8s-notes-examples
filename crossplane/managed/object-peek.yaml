@@ -1,0 +1,20 @@
+# A read-only Object in sandbox that points at a Secret in another namespace. The provider's account may
+# read Secrets everywhere, so the Secret's data lands in this Object's status (chapter 3 prints key names
+# only, then deletes it).
+apiVersion: kubernetes.m.crossplane.io/v1alpha1
+kind: Object
+metadata:
+  name: peek
+  namespace: sandbox
+spec:
+  managementPolicies: ["Observe"]
+  providerConfigRef:
+    kind: ProviderConfig
+    name: in-cluster
+  forProvider:
+    manifest:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: crossplane-root-ca
+        namespace: crossplane-system

@@ -1,0 +1,11 @@
+# Chapter 13, tenants as first committed: team-a's request for a database with one schema to write in.
+apiVersion: platform.k8s-notes.example/v1
+kind: AppDatabase
+metadata:
+  name: orders
+  namespace: team-a
+spec:
+  storage: 1Gi
+  schemas:
+  - name: sales
+    access: write

@@ -1,0 +1,17 @@
+# Chapter 5: the PostgreSQL server the book manages from outside. One instance of PostgreSQL 18.6 (the
+# image Field Guide 07 pins, by dated tag and digest), with the superuser reachable over the network and
+# its password taken from the Secret pg-admin.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg
+  namespace: data
+spec:
+  instances: 1
+  imageName: "ghcr.io/cloudnative-pg/postgresql:18.6-202610260820-minimal-trixie@sha256:\
+    64abc98a4387361afd6821a3a99f975763bbd87bbdde9449e75ad6002528a318"
+  enableSuperuserAccess: true
+  superuserSecret:
+    name: pg-admin
+  storage:
+    size: 1Gi

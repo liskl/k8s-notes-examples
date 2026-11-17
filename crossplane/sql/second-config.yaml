@@ -1,0 +1,24 @@
+# Chapter 6, throwaways: a second ProviderConfig on the same Secret, and one Database through it, to
+# show what happens when a ProviderConfig is deleted while a managed resource still uses it.
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: pg-second
+  namespace: data
+spec:
+  sslMode: require
+  credentials:
+    source: PostgreSQLConnectionSecret
+    connectionSecretRef:
+      name: pg-admin
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Database
+metadata:
+  name: probe
+  namespace: data
+spec:
+  providerConfigRef:
+    kind: ProviderConfig
+    name: pg-second
+  forProvider: {}

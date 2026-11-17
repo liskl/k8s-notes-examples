@@ -1,0 +1,8 @@
+# Chapter 14: a request named clash, on the real Composition. Its admin Secret would be clash-admin.
+apiVersion: platform.k8s-notes.example/v1
+kind: AppDatabase
+metadata:
+  name: clash
+  namespace: team-d
+spec:
+  storage: 1Gi

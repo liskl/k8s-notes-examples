@@ -1,0 +1,220 @@
+# Chapter 9, stage 7: the template reads what was observed. For each schema it looks up the
+# Schema and the Grant as they are on the cluster, and writes status.schemas and a condition on the XR.
+# It reads observed state with no guard, which a later step of the chapter pays for.
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: appdatabase
+spec:
+  compositeTypeRef:
+    apiVersion: platform.k8s-notes.example/v1
+    kind: AppDatabase
+  mode: Pipeline
+  pipeline:
+  - step: secret
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+          {{- $xr := .observed.composite.resource }}
+          {{- $pw := randAlphaNum 32 }}
+          {{- with .observed.resources }}{{ with (index . "admin") }}
+          {{- with .resource.data.password }}{{ $pw = . | b64dec }}{{ end }}
+          {{- end }}{{ end }}
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: {{ $xr.metadata.name }}-admin
+            labels:
+              cnpg.io/reload: "true"
+            annotations:
+              {{ setResourceNameAnnotation "admin" }}
+          type: kubernetes.io/basic-auth
+          stringData:
+            username: postgres
+            password: {{ $pw | quote }}
+            endpoint: {{ $xr.metadata.name }}-rw.{{ $xr.metadata.namespace }}.svc
+            port: "5432"
+  - step: compose
+    functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+      - name: providerconfig
+        base:
+          apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+          kind: ProviderConfig
+          spec:
+            sslMode: require
+            credentials:
+              source: PostgreSQLConnectionSecret
+        patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: spec.credentials.connectionSecretRef.name
+          transforms:
+          - type: string
+            string:
+              type: Format
+              fmt: "%s-admin"
+        readinessChecks:
+        - type: None
+      - name: cluster
+        base:
+          apiVersion: postgresql.cnpg.io/v1
+          kind: Cluster
+          spec:
+            instances: 1
+            imageName: "ghcr.io/cloudnative-pg/postgresql:18.6-202610260820-minimal-trixie@sha256:\
+              64abc98a4387361afd6821a3a99f975763bbd87bbdde9449e75ad6002528a318"
+            enableSuperuserAccess: true
+        patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: spec.superuserSecret.name
+          transforms:
+          - type: string
+            string:
+              type: Format
+              fmt: "%s-admin"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.storage
+          toFieldPath: spec.storage.size
+        - type: CombineToComposite
+          combine:
+            variables:
+            - fromFieldPath: status.writeService
+            - fromFieldPath: metadata.namespace
+            strategy: string
+            string:
+              fmt: "%s.%s.svc"
+          toFieldPath: status.endpoint
+      - name: database
+        base:
+          apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+          kind: Database
+          spec:
+            providerConfigRef:
+              kind: ProviderConfig
+            forProvider: {}
+        patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: spec.providerConfigRef.name
+      - name: role
+        base:
+          apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+          kind: Role
+          spec:
+            providerConfigRef:
+              kind: ProviderConfig
+            forProvider:
+              privileges:
+                login: true
+        patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+          transforms:
+          - type: string
+            string:
+              type: Format
+              fmt: "%s-app"
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: spec.providerConfigRef.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: spec.writeConnectionSecretToRef.name
+          transforms:
+          - type: string
+            string:
+              type: Format
+              fmt: "%s-app-conn"
+        - type: ToCompositeFieldPath
+          fromFieldPath: spec.writeConnectionSecretToRef.name
+          toFieldPath: status.secret
+  - step: schemas
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+          {{- $xr := .observed.composite.resource }}
+          {{- $name := $xr.metadata.name }}
+          {{- $status := list }}
+          {{- $count := 0 }}
+          {{- range $s := $xr.spec.schemas }}
+          {{- $k8s := printf "%s-%s" $name ($s.name | replace "_" "-") }}
+          {{- $schema := index $.observed.resources (print "schema-" $s.name) }}
+          {{- $grant := index $.observed.resources (print "grant-" $s.name) }}
+          {{- $ready := and (eq (getResourceCondition "Ready" $schema).Status "True")
+               (eq (getResourceCondition "Ready" $grant).Status "True") }}
+          {{- if $ready }}{{ $count = add $count 1 }}{{ end }}
+          {{- $status = append $status (dict "name" $s.name "ready" $ready) }}
+          ---
+          apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+          kind: Schema
+          metadata:
+            name: {{ $k8s }}
+            annotations:
+              {{ setResourceNameAnnotation (print "schema-" $s.name) }}
+              crossplane.io/external-name: {{ $s.name }}
+          spec:
+            providerConfigRef:
+              kind: ProviderConfig
+              name: {{ $name }}
+            forProvider:
+              database: {{ $name }}
+          ---
+          apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+          kind: Grant
+          metadata:
+            name: {{ $k8s }}-grant
+            annotations:
+              {{ setResourceNameAnnotation (print "grant-" $s.name) }}
+          spec:
+            providerConfigRef:
+              kind: ProviderConfig
+              name: {{ $name }}
+            forProvider:
+              database: {{ $name }}
+              schema: {{ $s.name }}
+              role: {{ $name }}-app
+              privileges: {{ if eq $s.access "write" }}[USAGE, CREATE]{{ else }}[USAGE]{{ end }}
+          {{- end }}
+          ---
+          apiVersion: platform.k8s-notes.example/v1
+          kind: AppDatabase
+          status:
+            schemas: {{ $status | toJson }}
+          ---
+          apiVersion: meta.gotemplating.fn.crossplane.io/v1alpha1
+          kind: ClaimConditions
+          conditions:
+          - type: SchemasReady
+            target: Composite
+            status: {{ if eq $count (len $status) }}"True"{{ else }}"False"{{ end }}
+            reason: {{ if eq $count (len $status) }}AllReady{{ else }}Waiting{{ end }}
+            message: {{ $count }} of {{ len $status }} schemas ready
+  - step: ready
+    functionRef:
+      name: function-auto-ready

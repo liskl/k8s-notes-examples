@@ -1,0 +1,13 @@
+# Chapter 13: where Flux reads from. The public examples repo over anonymous HTTPS, at the book's tag:
+# no token, no key, and nothing in this chapter is ever pushed. Every Kustomization of the chapter names
+# this one source.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: examples
+  namespace: flux-system
+spec:
+  interval: 10m
+  url: https://github.com/liskl/k8s-notes-examples
+  ref:
+    tag: crossplane-1.0

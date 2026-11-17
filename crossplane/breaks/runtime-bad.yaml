@@ -1,0 +1,15 @@
+# Chapter 14: a runtime config with a flag the provider does not have. Named by provider-nop (which
+# nothing on the lab depends on), it gives a provider whose Pod cannot start.
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: runtime-bad
+spec:
+  deploymentTemplate:
+    spec:
+      selector: {}
+      template:
+        spec:
+          containers:
+          - name: package-runtime
+            args: ["--no-such-flag"]

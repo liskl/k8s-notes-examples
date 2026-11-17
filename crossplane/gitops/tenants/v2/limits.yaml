@@ -1,0 +1,8 @@
+# Chapter 13: team-a's limit (chapter 9), kept beside its requests: at most two schemas a database.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: appdatabase-limits
+  namespace: team-a
+data:
+  maxSchemas: "2"

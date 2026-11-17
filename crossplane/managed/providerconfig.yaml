@@ -1,0 +1,10 @@
+# A ProviderConfig tells a provider how to reach what it manages. This one is namespaced and says: this
+# cluster, as the provider Pod's own ServiceAccount. Objects in sandbox name it (chapter 3).
+apiVersion: kubernetes.m.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: in-cluster
+  namespace: sandbox
+spec:
+  credentials:
+    source: InjectedIdentity

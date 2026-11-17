@@ -1,0 +1,9 @@
+# The activation policy for provider-helm: only the namespaced Release. The legacy cluster-scoped Release
+# stays switched off (chapter 4).
+apiVersion: apiextensions.crossplane.io/v1alpha1
+kind: ManagedResourceActivationPolicy
+metadata:
+  name: helm
+spec:
+  activate:
+  - releases.helm.m.crossplane.io

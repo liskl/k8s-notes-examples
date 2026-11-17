@@ -1,0 +1,5 @@
+# Chapter 13: the operator's namespace.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cnpg-system

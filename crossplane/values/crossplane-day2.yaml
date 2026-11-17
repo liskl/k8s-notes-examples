@@ -1,0 +1,9 @@
+# Chapter 12: the book's values for the crossplane chart with one argument added for the core. It makes
+# an XR's circuit breaker stay open for one minute after it trips, not five (chapter 8). The chapter
+# upgrades to these values and then back to crossplane.yaml.
+image:
+  tag: v2.4.3@sha256:1c66261d805a73cade46e2ac94b665c73aebd4a00844de5fcae4bcadaa2be638
+provider:
+  defaultActivations: []
+args:
+- --circuit-breaker-cooldown=1m

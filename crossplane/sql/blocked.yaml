@@ -1,0 +1,45 @@
+# Chapter 6, throwaways for the deletes PostgreSQL refuses: a database, a role that owns a schema in it,
+# and a second schema that the step puts a table into. The label lets one command list the four.
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Database
+metadata:
+  name: scratch
+  namespace: data
+  labels: {try: blocked}
+spec:
+  providerConfigRef: {kind: ProviderConfig, name: pg}
+  forProvider: {}
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Role
+metadata:
+  name: scratch-owner
+  namespace: data
+  labels: {try: blocked}
+spec:
+  providerConfigRef: {kind: ProviderConfig, name: pg}
+  forProvider:
+    privileges: {login: true}
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Schema
+metadata:
+  name: mine
+  namespace: data
+  labels: {try: blocked}
+spec:
+  providerConfigRef: {kind: ProviderConfig, name: pg}
+  forProvider:
+    databaseRef: {name: scratch}
+    roleRef: {name: scratch-owner}
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Schema
+metadata:
+  name: stuff
+  namespace: data
+  labels: {try: blocked}
+spec:
+  providerConfigRef: {kind: ProviderConfig, name: pg}
+  forProvider:
+    databaseRef: {name: scratch}

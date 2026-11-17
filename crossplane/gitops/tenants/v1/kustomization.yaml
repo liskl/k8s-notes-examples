@@ -1,0 +1,7 @@
+# Chapter 13, tenants/v1: the first commit. Two requests of team-a's and its limit.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- limits.yaml
+- orders.yaml
+- scratch.yaml

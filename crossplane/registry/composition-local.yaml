@@ -1,0 +1,18 @@
+# Chapter 10: a throwaway Composition whose one step is the function built in the chapter and served
+# from the lab's own registry. An XR must name it in spec.crossplane.compositionRef.
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: appdatabase-local
+spec:
+  compositeTypeRef:
+    apiVersion: platform.k8s-notes.example/v1
+    kind: AppDatabase
+  mode: Pipeline
+  pipeline:
+  - step: schemas
+    functionRef:
+      name: function-appdb-schemas-local
+    input:
+      apiVersion: appdbschemas.fn.k8s-notes.example/v1beta1
+      kind: Input

@@ -1,0 +1,11 @@
+# Chapter 9: the platform's defaults in one object. An EnvironmentConfig is cluster scoped and holds plain
+# data. function-environment-configs loads it into the pipeline's context, where patches and templates
+# read it. Change the image here, and every AppDatabase follows at its next reconcile.
+apiVersion: apiextensions.crossplane.io/v1beta1
+kind: EnvironmentConfig
+metadata:
+  name: appdatabase-defaults
+data:
+  image: "ghcr.io/cloudnative-pg/postgresql:18.6-202610260820-minimal-trixie@sha256:\
+    64abc98a4387361afd6821a3a99f975763bbd87bbdde9449e75ad6002528a318"
+  port: "5432"

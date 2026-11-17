@@ -1,0 +1,13 @@
+# Chapter 12: an ImageConfig that rewrites where one package is fetched from. Every image whose name
+# starts with the prefix is pulled from ghcr.io instead, where the same bytes live under the same digest
+# (chapter 2). A mirror of your own would stand in the same place.
+apiVersion: pkg.crossplane.io/v1beta1
+kind: ImageConfig
+metadata:
+  name: nop-from-ghcr
+spec:
+  matchImages:
+  - type: Prefix
+    prefix: xpkg.crossplane.io/crossplane-contrib/provider-nop
+  rewriteImage:
+    prefix: ghcr.io/crossplane-contrib/provider-nop

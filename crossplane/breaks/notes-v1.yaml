@@ -1,0 +1,70 @@
+# Chapter 14: the same XRD with a second version, v1, that has one field more than v1alpha1 (author).
+# It looks harmless: the old version is still served. The CRD converts nothing between versions
+# (conversion: None), and a Note made at v1alpha1 breaks the moment it holds the new field. The book's
+# own XRD gives both versions one schema for this reason (chapter 7). The Composition moves to v1, the
+# version an XRD's Compositions must name (referenceable).
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: notes.platform.k8s-notes.example
+spec:
+  scope: Namespaced
+  group: platform.k8s-notes.example
+  names:
+    kind: Note
+    plural: notes
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: false
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              text:
+                type: string
+  - name: v1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              text:
+                type: string
+              author:
+                type: string
+---
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: note
+spec:
+  compositeTypeRef:
+    apiVersion: platform.k8s-notes.example/v1
+    kind: Note
+  mode: Pipeline
+  pipeline:
+  - step: compose
+    functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+      - name: text
+        base:
+          apiVersion: v1
+          kind: ConfigMap
+        patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.text
+          toFieldPath: data.text
+        readinessChecks:
+        - type: None

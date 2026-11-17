@@ -1,0 +1,13 @@
+# Chapter 14: a Secret that is in the way. It has the name the Composition gives a request's admin
+# Secret (<request>-admin), somebody else made it first, and it is of another type than the one the
+# Composition asks for.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: clash-admin
+  namespace: team-d
+  labels:
+    made-by: someone-else
+type: Opaque
+stringData:
+  note: this Secret was here first

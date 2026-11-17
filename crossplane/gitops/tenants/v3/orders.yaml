@@ -1,0 +1,16 @@
+# Chapter 13, the third commit: the request now carries Flux's annotation against pruning. It changes
+# nothing today. It decides what happens on the day this file leaves Git (tenants/v4).
+apiVersion: platform.k8s-notes.example/v1
+kind: AppDatabase
+metadata:
+  name: orders
+  namespace: team-a
+  annotations:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  storage: 1Gi
+  schemas:
+  - name: sales
+    access: write
+  - name: audit
+    access: read

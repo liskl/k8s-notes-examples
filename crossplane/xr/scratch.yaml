@@ -1,0 +1,8 @@
+# Chapters 8 and 9: a throwaway AppDatabase in a second team's namespace, for the pages that delete one.
+apiVersion: platform.k8s-notes.example/v1
+kind: AppDatabase
+metadata:
+  name: scratch
+  namespace: team-b
+spec:
+  storage: 1Gi

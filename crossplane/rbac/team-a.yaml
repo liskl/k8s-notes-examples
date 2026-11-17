@@ -1,0 +1,21 @@
+# Chapter 7: what a team gets. A ServiceAccount stands in for a team member, and one RoleBinding in the
+# team's namespace gives it the ClusterRole the RBAC manager made for the XRD: AppDatabases, nothing else.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dev
+  namespace: team-a
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: appdatabase-edit
+  namespace: team-a
+subjects:
+- kind: ServiceAccount
+  name: dev
+  namespace: team-a
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: crossplane:composite:appdatabases.platform.k8s-notes.example:aggregate-to-edit

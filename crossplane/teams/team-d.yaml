@@ -1,0 +1,16 @@
+# Chapter 14: a throwaway namespace for the chapter's breaks, under the restricted Pod Security level
+# like every team's, with a limit of two schemas. Nothing in it outlives the chapter.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: team-d
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: appdatabase-limits
+  namespace: team-d
+data:
+  maxSchemas: "2"

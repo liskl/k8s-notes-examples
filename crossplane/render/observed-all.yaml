@@ -1,0 +1,94 @@
+# Chapter 10: the observed resources of observed.yaml plus the Grant and the DefaultPrivileges of the
+# schema catalog, both Ready: everything the Go function makes for one schema, as a cluster would hold it
+# once the request is finished. For crossplane composition render --observed-resources.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: shop-admin
+  namespace: team-c
+  annotations:
+    crossplane.io/composition-resource-name: admin
+type: kubernetes.io/basic-auth
+data:
+  username: cG9zdGdyZXM=
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: shop
+  namespace: team-c
+  annotations:
+    crossplane.io/composition-resource-name: providerconfig
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: shop
+  namespace: team-c
+  annotations:
+    crossplane.io/composition-resource-name: cluster
+status:
+  writeService: shop-rw
+  conditions:
+  - type: Ready
+    status: "True"
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Role
+metadata:
+  name: shop-app
+  namespace: team-c
+  annotations:
+    crossplane.io/composition-resource-name: role
+status:
+  conditions:
+  - type: Ready
+    status: "True"
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Database
+metadata:
+  name: shop
+  namespace: team-c
+  annotations:
+    crossplane.io/composition-resource-name: database
+status:
+  conditions:
+  - type: Ready
+    status: "True"
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Schema
+metadata:
+  name: shop-catalog
+  namespace: team-c
+  annotations:
+    crossplane.io/composition-resource-name: schema-catalog
+status:
+  conditions:
+  - type: Ready
+    status: "True"
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Grant
+metadata:
+  name: shop-catalog-grant
+  namespace: team-c
+  annotations:
+    crossplane.io/composition-resource-name: grant-catalog
+status:
+  conditions:
+  - type: Ready
+    status: "True"
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: DefaultPrivileges
+metadata:
+  name: shop-catalog-tables
+  namespace: team-c
+  annotations:
+    crossplane.io/composition-resource-name: defpriv-catalog
+status:
+  conditions:
+  - type: Ready
+    status: "True"

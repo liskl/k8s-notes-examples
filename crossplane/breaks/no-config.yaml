@@ -1,0 +1,12 @@
+# Chapter 14: a managed resource that names a ProviderConfig nobody made. A hand-written Database, as in
+# chapter 5, in the throwaway namespace.
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Database
+metadata:
+  name: nowhere
+  namespace: team-d
+spec:
+  providerConfigRef:
+    kind: ProviderConfig
+    name: not-made
+  forProvider: {}

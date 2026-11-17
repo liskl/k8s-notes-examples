@@ -1,0 +1,15 @@
+# Chapter 5: an extension, installed in the database orders. pgcrypto is a trusted extension, so even a
+# role that is no superuser may install it (chapter 6).
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Extension
+metadata:
+  name: orders-pgcrypto
+  namespace: data
+spec:
+  providerConfigRef:
+    kind: ProviderConfig
+    name: pg
+  forProvider:
+    extension: pgcrypto
+    databaseRef:
+      name: orders

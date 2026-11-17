@@ -1,0 +1,14 @@
+# Chapter 14: the same Secret in the way, this time of the type the Composition asks for
+# (kubernetes.io/basic-auth). It holds another user's name; the chapter gives it a random password with
+# one patch, as chapter 5 did for pg-admin, so that no password is in this file.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: clash-admin
+  namespace: team-d
+  labels:
+    made-by: someone-else
+type: kubernetes.io/basic-auth
+stringData:
+  username: someone
+  note: this Secret was here first

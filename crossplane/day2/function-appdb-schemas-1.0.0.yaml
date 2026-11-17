@@ -1,0 +1,11 @@
+# Chapter 12: the book's function one release back, v1.0.0, by tag and digest. Applied over the Function
+# of chapter 10 it is a change of version like any other: a new revision, the old one kept. v1.0.0 sets
+# the condition SchemasValid only when it refuses a name and knows nothing of SchemasReady; the chapter
+# shows that on a request, then goes forward to v1.0.1 again (../packages/function-appdb-schemas.yaml).
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-appdb-schemas
+spec:
+  package: "ghcr.io/liskl/k8s-notes-examples/function-appdb-schemas:v1.0.0@sha256:\
+    e8b211d6c3162f74fa2ed2d681b6aa123bdbfded2b4ada3b8636b929ea9236df"

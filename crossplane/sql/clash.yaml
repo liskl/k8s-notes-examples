@@ -1,0 +1,29 @@
+# Chapter 6, throwaways: provider-sql's side of two things CloudNativePG is also told to manage. The
+# Database clash with the owner postgres (CloudNativePG says app), and the Role clash-role, which
+# CloudNativePG is then given as a managed role with its own password and CREATEDB.
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Database
+metadata:
+  name: clash
+  namespace: data
+spec:
+  providerConfigRef:
+    kind: ProviderConfig
+    name: pg
+  forProvider:
+    owner: postgres
+---
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Role
+metadata:
+  name: clash-role
+  namespace: data
+spec:
+  providerConfigRef:
+    kind: ProviderConfig
+    name: pg
+  forProvider:
+    privileges:
+      login: true
+  writeConnectionSecretToRef:
+    name: clash-role-conn

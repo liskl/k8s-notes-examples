@@ -1,0 +1,18 @@
+# Chapter 5: a grant. Which kind of grant it is follows from the fields that are filled in: a database
+# and no schema makes it a grant on the database.
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Grant
+metadata:
+  name: orders-app-connect
+  namespace: data
+spec:
+  providerConfigRef:
+    kind: ProviderConfig
+    name: pg
+  forProvider:
+    privileges:
+    - CONNECT
+    databaseRef:
+      name: orders
+    roleRef:
+      name: orders-app

@@ -1,0 +1,16 @@
+# Chapter 5: the app's role. It may log in and nothing more. No password is given, so the provider makes
+# one and writes it, with the endpoint and the port, to the Secret named here.
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Role
+metadata:
+  name: orders-app
+  namespace: data
+spec:
+  providerConfigRef:
+    kind: ProviderConfig
+    name: pg
+  forProvider:
+    privileges:
+      login: true
+  writeConnectionSecretToRef:
+    name: orders-app-conn

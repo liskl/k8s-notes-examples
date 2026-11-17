@@ -1,0 +1,13 @@
+# Chapter 13, one commit later: the team adds a second schema, audit, to read from.
+apiVersion: platform.k8s-notes.example/v1
+kind: AppDatabase
+metadata:
+  name: orders
+  namespace: team-a
+spec:
+  storage: 1Gi
+  schemas:
+  - name: sales
+    access: write
+  - name: audit
+    access: read

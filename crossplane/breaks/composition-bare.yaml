@@ -1,0 +1,47 @@
+# Chapter 10: a throwaway Composition of three steps. The first composes a ConfigMap. The second is the
+# book's function with the input "break: bare-response": it answers without copying forward what the
+# first step wanted. The third marks readiness. An XR must name it in spec.crossplane.compositionRef.
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: appdatabase-bare
+spec:
+  compositeTypeRef:
+    apiVersion: platform.k8s-notes.example/v1
+    kind: AppDatabase
+  mode: Pipeline
+  pipeline:
+  - step: note
+    functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+      - name: note
+        base:
+          apiVersion: v1
+          kind: ConfigMap
+          data:
+            made-by: the first step
+        patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+          transforms:
+          - type: string
+            string:
+              type: Format
+              fmt: "%s-note"
+        readinessChecks:
+        - type: None
+  - step: schemas
+    functionRef:
+      name: function-appdb-schemas
+    input:
+      apiVersion: appdbschemas.fn.k8s-notes.example/v1beta1
+      kind: Input
+      break: bare-response
+  - step: ready
+    functionRef:
+      name: function-auto-ready

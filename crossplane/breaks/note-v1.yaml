@@ -1,0 +1,9 @@
+# Chapter 14: a second Note, made at the kind's new version, with the field only v1 has.
+apiVersion: platform.k8s-notes.example/v1
+kind: Note
+metadata:
+  name: second
+  namespace: team-d
+spec:
+  text: made at v1
+  author: someone

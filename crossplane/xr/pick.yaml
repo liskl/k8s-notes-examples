@@ -1,0 +1,10 @@
+# Chapter 11: a request that names no Composition, for the namespace team-c. The chapter applies it under
+# several names (pick-1, pick-2, ...) to see which Composition each one gets.
+apiVersion: platform.k8s-notes.example/v1
+kind: AppDatabase
+metadata:
+  name: pick
+  namespace: team-c
+spec:
+  schemas:
+  - name: notes

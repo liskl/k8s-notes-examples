@@ -1,0 +1,18 @@
+# Chapter 13, the wrong way: one Flux Kustomization for the whole platform, from the core's chart to a
+# team's request. It cannot work: Flux first asks the API server for a dry run of everything, and most of
+# the kinds do not exist until something earlier in the same list has run.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: everything
+  namespace: flux-system
+spec:
+  interval: 10m
+  retryInterval: 30s
+  timeout: 3m
+  sourceRef:
+    kind: GitRepository
+    name: examples
+  path: ./crossplane/gitops/everything
+  prune: true
+  wait: true

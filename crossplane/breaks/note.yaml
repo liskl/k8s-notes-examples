@@ -1,0 +1,8 @@
+# Chapter 14: one Note, made at the kind's first version.
+apiVersion: platform.k8s-notes.example/v1alpha1
+kind: Note
+metadata:
+  name: first
+  namespace: team-d
+spec:
+  text: made at v1alpha1

@@ -1,0 +1,12 @@
+# Chapter 5: a database. Its name in PostgreSQL is the resource's name. With nothing in forProvider the
+# server's defaults apply, and the owner is the role the provider logs in as.
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: Database
+metadata:
+  name: orders
+  namespace: data
+spec:
+  providerConfigRef:
+    kind: ProviderConfig
+    name: pg
+  forProvider: {}

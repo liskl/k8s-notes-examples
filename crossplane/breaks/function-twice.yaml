@@ -1,0 +1,10 @@
+# Chapter 10: the book's function a second time, under another name. It looks like a safe copy to break.
+# It is not: the Lock keeps one entry a package source, and with two Functions on one source every
+# package in the cluster turns unhealthy until one of the two is deleted.
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  name: function-appdb-schemas-copy
+spec:
+  package: "ghcr.io/liskl/k8s-notes-examples/function-appdb-schemas:v1.0.1@sha256:\
+    d94c3606b5210b57ae9e8f3620df4e3293b84549aa99f8eca84b2aad68ad34b6"

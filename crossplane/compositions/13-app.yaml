@@ -1,0 +1,328 @@
+# Chapter 11, stage 13: the demo app, for a request that has spec.app. One more template step composes
+# a Deployment, a Service and an HTTPRoute on the lab's Gateway. The app logs in with the Secret
+# provider-sql wrote for the Role, key by key, and a third sequencer rule starts it after the grants.
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: appdatabase
+spec:
+  compositeTypeRef:
+    apiVersion: platform.k8s-notes.example/v1
+    kind: AppDatabase
+  mode: Pipeline
+  pipeline:
+  - step: environment
+    functionRef:
+      name: function-environment-configs
+    input:
+      apiVersion: environmentconfigs.fn.crossplane.io/v1beta1
+      kind: Input
+      spec:
+        environmentConfigs:
+        - type: Reference
+          ref:
+            name: appdatabase-defaults
+  - step: limits
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+          {{- $xr := .observed.composite.resource }}
+          {{- $ns := $xr.metadata.namespace }}
+          apiVersion: meta.gotemplating.fn.crossplane.io/v1alpha1
+          kind: ExtraResources
+          requirements:
+            limits:
+              apiVersion: v1
+              kind: ConfigMap
+              matchName: appdatabase-limits
+              namespace: {{ $ns }}
+          {{- with .extraResources }}{{ with (index . "limits") }}{{ with .items }}
+          {{- $max := (index . 0).resource.data.maxSchemas | int }}
+          {{- $asked := len ($xr.spec.schemas | default list) }}
+          {{- if gt $asked $max }}
+          {{- fail (printf "%s may have %d schemas, %s asks for %d" $ns $max $xr.metadata.name $asked) }}
+          {{- end }}
+          {{- end }}{{ end }}{{ end }}
+  - step: secret
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+          {{- $xr := .observed.composite.resource }}
+          {{- $env := index .context "apiextensions.crossplane.io/environment" }}
+          {{- $pw := randAlphaNum 32 }}
+          {{- with .observed.resources }}{{ with (index . "admin") }}
+          {{- with .resource.data.password }}{{ $pw = . | b64dec }}{{ end }}
+          {{- end }}{{ end }}
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: {{ $xr.metadata.name }}-admin
+            labels:
+              cnpg.io/reload: "true"
+            annotations:
+              {{ setResourceNameAnnotation "admin" }}
+          type: kubernetes.io/basic-auth
+          stringData:
+            username: postgres
+            password: {{ $pw | quote }}
+            endpoint: {{ $xr.metadata.name }}-rw.{{ $xr.metadata.namespace }}.svc
+            port: {{ $env.port | quote }}
+  - step: compose
+    functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+      - name: providerconfig
+        base:
+          apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+          kind: ProviderConfig
+          spec:
+            sslMode: require
+            credentials:
+              source: PostgreSQLConnectionSecret
+        patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: spec.credentials.connectionSecretRef.name
+          transforms:
+          - type: string
+            string:
+              type: Format
+              fmt: "%s-admin"
+        readinessChecks:
+        - type: None
+      - name: cluster
+        base:
+          apiVersion: postgresql.cnpg.io/v1
+          kind: Cluster
+          spec:
+            instances: 1
+            enableSuperuserAccess: true
+        patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: spec.superuserSecret.name
+          transforms:
+          - type: string
+            string:
+              type: Format
+              fmt: "%s-admin"
+        - type: FromCompositeFieldPath
+          fromFieldPath: spec.storage
+          toFieldPath: spec.storage.size
+        - type: FromEnvironmentFieldPath
+          fromFieldPath: image
+          toFieldPath: spec.imageName
+        - type: CombineToComposite
+          combine:
+            variables:
+            - fromFieldPath: status.writeService
+            - fromFieldPath: metadata.namespace
+            strategy: string
+            string:
+              fmt: "%s.%s.svc"
+          toFieldPath: status.endpoint
+      - name: database
+        base:
+          apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+          kind: Database
+          spec:
+            providerConfigRef:
+              kind: ProviderConfig
+            forProvider: {}
+        patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: spec.providerConfigRef.name
+      - name: role
+        base:
+          apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+          kind: Role
+          spec:
+            providerConfigRef:
+              kind: ProviderConfig
+            forProvider:
+              privileges:
+                login: true
+        patches:
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: metadata.name
+          transforms:
+          - type: string
+            string:
+              type: Format
+              fmt: "%s-app"
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: spec.providerConfigRef.name
+        - type: FromCompositeFieldPath
+          fromFieldPath: metadata.name
+          toFieldPath: spec.writeConnectionSecretToRef.name
+          transforms:
+          - type: string
+            string:
+              type: Format
+              fmt: "%s-app-conn"
+        - type: ToCompositeFieldPath
+          fromFieldPath: spec.writeConnectionSecretToRef.name
+          toFieldPath: status.secret
+  - step: schemas
+    functionRef:
+      name: function-appdb-schemas
+    input:
+      apiVersion: appdbschemas.fn.k8s-notes.example/v1beta1
+      kind: Input
+      reserved: [admin]
+  - step: app
+    functionRef:
+      name: function-go-templating
+    input:
+      apiVersion: gotemplating.fn.crossplane.io/v1beta1
+      kind: GoTemplate
+      source: Inline
+      inline:
+        template: |
+          {{- $xr := .observed.composite.resource }}
+          {{- with $xr.spec.app }}
+          {{- $name := $xr.metadata.name }}
+          {{- $ns := $xr.metadata.namespace }}
+          {{- $host := printf "%s.%s.localhost" $name $ns }}
+          {{- $accepted := "False" }}
+          {{- with $.observed.resources }}{{ with (index . "web-route") }}
+          {{- range (.resource.status.parents | default list) }}{{ range .conditions }}
+          {{- if and (eq .type "Accepted") (eq .status "True") }}{{ $accepted = "True" }}{{ end }}
+          {{- end }}{{ end }}
+          {{- end }}{{ end }}
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: {{ $name }}-web
+            annotations:
+              {{ setResourceNameAnnotation "web" }}
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: {{ $name }}-web
+            template:
+              metadata:
+                labels:
+                  app: {{ $name }}-web
+              spec:
+                securityContext:
+                  runAsNonRoot: true
+                  seccompProfile:
+                    type: RuntimeDefault
+                containers:
+                - name: web
+                  image: "ghcr.io/liskl/k8s-notes-examples/crossplane-demo:1.0.0@sha256:\
+                    375c9f59ce8738e7933b4a550988a3b2b30f6bee113b15ae37740d6920b1f4ce"
+                  args: ["web"]
+                  ports:
+                  - name: http
+                    containerPort: 8080
+                  env:
+                  - name: PGHOST
+                    value: {{ $name }}-rw.{{ $ns }}.svc
+                  - name: PGDATABASE
+                    value: {{ $name }}
+                  - name: PGSSLMODE
+                    value: require
+                  - name: DEMO_SCHEMA
+                    value: {{ .schema }}
+                  {{- range $env, $key := dict "PGPORT" "port" "PGUSER" "username" "PGPASSWORD" "password" }}
+                  - name: {{ $env }}
+                    valueFrom: {secretKeyRef: {name: {{ $name }}-app-conn, key: {{ $key }}}}
+                  {{- end }}
+                  readinessProbe:
+                    httpGet: {path: /healthz, port: http}
+                  securityContext:
+                    allowPrivilegeEscalation: false
+                    readOnlyRootFilesystem: true
+                    capabilities:
+                      drop: ["ALL"]
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: {{ $name }}-web
+            annotations:
+              {{ setResourceNameAnnotation "web-service" }}
+          spec:
+            selector:
+              app: {{ $name }}-web
+            ports:
+            - name: http
+              port: 80
+              targetPort: http
+          ---
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: {{ $name }}-web
+            annotations:
+              {{ setResourceNameAnnotation "web-route" }}
+              gotemplating.fn.crossplane.io/ready: {{ $accepted | quote }}
+          spec:
+            parentRefs:
+            - name: http
+              namespace: kgateway-system
+            hostnames:
+            - {{ $host }}
+            rules:
+            - backendRefs:
+              - name: {{ $name }}-web
+                port: 80
+          ---
+          apiVersion: platform.k8s-notes.example/v1
+          kind: AppDatabase
+          status:
+            host: {{ $host }}
+          {{- end }}
+  - step: ready
+    functionRef:
+      name: function-auto-ready
+  - step: sequence
+    functionRef:
+      name: function-sequencer
+    input:
+      apiVersion: sequencer.fn.crossplane.io/v1beta1
+      kind: Input
+      enableDeletionSequencing: true
+      rules:
+      - sequence:
+        - admin
+        - providerconfig
+        - cluster
+        - role
+        - database
+        - schema-.*
+        - grant-.*
+      - sequence:
+        - schema-.*
+        - defpriv-.*
+      - sequence:
+        - grant-.*
+        - web

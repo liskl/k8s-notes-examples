@@ -1,0 +1,11 @@
+# Chapter 12: chapter 3's activation policy for provider-kubernetes with one more kind in its list, the
+# namespaced ObservedObjectCollection. Applying it over the old policy switches the kind on; nothing
+# switches a kind off again.
+apiVersion: apiextensions.crossplane.io/v1alpha1
+kind: ManagedResourceActivationPolicy
+metadata:
+  name: kubernetes
+spec:
+  activate:
+  - objects.kubernetes.m.crossplane.io
+  - observedobjectcollections.kubernetes.m.crossplane.io

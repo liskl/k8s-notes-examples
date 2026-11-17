@@ -1,0 +1,17 @@
+# Chapter 6: a runtime config that makes provider-sql look at every resource each 30 seconds, where its
+# default is 10 minutes. A Provider takes it through spec.runtimeConfigRef. The book uses it for the
+# drift chapter only and takes it off again at the chapter's end.
+apiVersion: pkg.crossplane.io/v1beta1
+kind: DeploymentRuntimeConfig
+metadata:
+  name: provider-sql-poll
+spec:
+  deploymentTemplate:
+    spec:
+      selector: {}
+      template:
+        spec:
+          containers:
+          - name: package-runtime
+            args:
+            - --poll=30s

@@ -1,0 +1,53 @@
+# Chapter 12: one use of the kind just activated. provider-kubernetes may read Services in team-a (a Role
+# for its fixed account; the chapter finds it one verb short), a ProviderConfig lets it act there as
+# itself, and an ObservedObjectCollection asks it to watch every Service that CloudNativePG labelled for
+# the Cluster orders: one read-only Object for each match.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: provider-kubernetes-services
+  namespace: team-a
+rules:
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: provider-kubernetes-services
+  namespace: team-a
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: provider-kubernetes-services
+subjects:
+- kind: ServiceAccount
+  name: provider-kubernetes
+  namespace: crossplane-system
+---
+apiVersion: kubernetes.m.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: in-cluster
+  namespace: team-a
+spec:
+  credentials:
+    source: InjectedIdentity
+---
+apiVersion: kubernetes.m.crossplane.io/v1alpha1
+kind: ObservedObjectCollection
+metadata:
+  name: orders-services
+  namespace: team-a
+spec:
+  providerConfigRef:
+    kind: ProviderConfig
+    name: in-cluster
+  observeObjects:
+    apiVersion: v1
+    kind: Service
+    namespace: team-a
+    selector:
+      matchLabels:
+        cnpg.io/cluster: orders

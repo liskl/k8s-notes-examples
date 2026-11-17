@@ -1,0 +1,6 @@
+# Chapter 13, tenants/v3: scratch is gone from the list, and orders is marked never to be pruned.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- limits.yaml
+- orders.yaml

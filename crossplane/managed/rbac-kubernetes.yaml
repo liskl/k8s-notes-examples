@@ -1,0 +1,25 @@
+# What provider-kubernetes may do for the Object quota: ResourceQuotas, in the namespace sandbox only.
+# A Role, not a ClusterRole, so the grant ends at the namespace's edge (chapter 3).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: provider-kubernetes
+  namespace: sandbox
+rules:
+- apiGroups: [""]
+  resources: ["resourcequotas"]
+  verbs: ["get", "list", "watch", "create", "patch", "update", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: provider-kubernetes
+  namespace: sandbox
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: provider-kubernetes
+subjects:
+- kind: ServiceAccount
+  name: provider-kubernetes
+  namespace: crossplane-system

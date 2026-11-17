@@ -1,0 +1,20 @@
+# Chapter 11: a Usage that ties one object to another. The limits ConfigMap of team-c is in use by the
+# AppDatabase pick-1: it cannot be deleted first, and with replayDeletion a refused delete is carried
+# out by Crossplane as soon as the AppDatabase is gone.
+apiVersion: protection.crossplane.io/v1beta1
+kind: Usage
+metadata:
+  name: limits-in-use
+  namespace: team-c
+spec:
+  replayDeletion: true
+  of:
+    apiVersion: v1
+    kind: ConfigMap
+    resourceRef:
+      name: appdatabase-limits
+  by:
+    apiVersion: platform.k8s-notes.example/v1
+    kind: AppDatabase
+    resourceRef:
+      name: pick-1
