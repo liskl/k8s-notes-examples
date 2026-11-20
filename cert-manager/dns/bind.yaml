@@ -1,0 +1,98 @@
+# A small BIND that is the authority for one small zone, _acme-challenge.lab.example:
+# the one name ACME looks at to prove lab.example and *.lab.example. It takes dynamic
+# updates (RFC 2136); this first version takes them from anyone.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bind
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bind
+  namespace: bind
+data:
+  named.conf: |
+    options {
+      directory "/var/cache/bind";
+      dnssec-validation no;
+      recursion no;
+      listen-on port 8053 { any; };
+    };
+    controls { };
+    zone "_acme-challenge.lab.example" {
+      type primary;
+      file "/etc/bind/db.acme";
+      allow-update { any; };
+    };
+  db.acme: |
+    $TTL 30
+    @   IN SOA ns.lab.example. root.lab.example. ( 1 604800 86400 2419200 30 )
+    @   IN NS  ns.lab.example.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bind
+  namespace: bind
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bind
+  template:
+    metadata:
+      labels:
+        app: bind
+    spec:
+      securityContext:
+        runAsUser: 100
+        runAsGroup: 101
+        fsGroup: 101
+      containers:
+      - name: bind
+        image: docker.io/ubuntu/bind9:9.20-25.04_beta@sha256:45d541e9688f2c9010d22a78200117b66ed2df31b78f3464876f7e6e15cfaf77
+        command: ["/bin/bash", "-c", "cp -Lr /config/* /etc/bind/ && exec named -u bind -g -4"]
+        ports:
+        - containerPort: 8053
+          protocol: UDP
+        - containerPort: 8053
+          protocol: TCP
+        volumeMounts:
+        - name: config
+          mountPath: /config
+          readOnly: true
+        - name: etc
+          mountPath: /etc/bind
+      volumes:
+      - name: config
+        projected:
+          sources:
+          - configMap:
+              name: bind
+          - secret:
+              name: bind-tsig
+              optional: true     # the TSIG key, once the chapter makes it
+      - name: etc
+        emptyDir: {}
+---
+# A fixed address, so an Issuer and a CoreDNS line can name it. The lab's Service
+# range is 10.96.0.0/16 and Kubernetes keeps its low addresses for fixed picks.
+apiVersion: v1
+kind: Service
+metadata:
+  name: bind
+  namespace: bind
+spec:
+  clusterIP: 10.96.0.53
+  selector:
+    app: bind
+  ports:
+  - name: dns-udp
+    port: 53
+    targetPort: 8053
+    protocol: UDP
+  - name: dns-tcp
+    port: 53
+    targetPort: 8053
+    protocol: TCP

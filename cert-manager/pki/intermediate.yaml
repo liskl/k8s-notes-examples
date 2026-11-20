@@ -1,0 +1,31 @@
+# The intermediate CA, signed by the root. Day to day, this is the key that signs.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: lab-intermediate
+  namespace: cert-manager
+spec:
+  isCA: true
+  commonName: lab intermediate CA
+  subject:
+    organizations:
+    - k8s-notes lab
+  secretName: lab-intermediate
+  duration: 8760h                # one year
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Never
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: lab-root-ca
+---
+# The issuer the rest of the book asks: it signs with the intermediate's key.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: lab-ca
+spec:
+  ca:
+    secretName: lab-intermediate

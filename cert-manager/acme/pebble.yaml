@@ -1,0 +1,100 @@
+# Pebble v2.10.3: Let's Encrypt's small ACME server for tests. It keeps nothing:
+# every restart makes new root certificates and forgets every account.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pebble-config
+  namespace: pebble
+data:
+  pebble-config.json: |
+    {
+      "pebble": {
+        "listenAddress": "0.0.0.0:14000",
+        "managementListenAddress": "0.0.0.0:15000",
+        "certificate": "/tls/tls.crt",
+        "privateKey": "/tls/tls.key",
+        "httpPort": 80,
+        "tlsPort": 443,
+        "externalAccountBindingRequired": false,
+        "keyAlgorithm": "ecdsa",
+        "profiles": {
+          "default": {"description": "the lab's profile, 90 days", "validityPeriod": 7776000}
+        }
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pebble
+  namespace: pebble
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pebble
+  template:
+    metadata:
+      labels:
+        app: pebble
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: pebble
+        image: ghcr.io/letsencrypt/pebble:2.10.3@sha256:0c81f05db371f436c97fb894bd6d2ab8fc9c8e2ce40f8bef8a8e15941bcd75ef
+        args:
+        - -config=/config/pebble-config.json
+        env:
+        - name: PEBBLE_VA_NOSLEEP        # validate at once, no random wait
+          value: "1"
+        - name: PEBBLE_AUTHZREUSE        # never reuse an old authorization: every order is challenged
+          value: "0"
+        - name: PEBBLE_WFE_NONCEREJECT   # do not reject good nonces at random
+          value: "0"
+        ports:
+        - name: acme
+          containerPort: 14000
+        - name: management
+          containerPort: 15000
+        readinessProbe:
+          httpGet:
+            path: /dir
+            port: 14000
+            scheme: HTTPS
+          periodSeconds: 2
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: tls
+          mountPath: /tls
+      volumes:
+      - name: config
+        configMap:
+          name: pebble-config
+      - name: tls
+        secret:
+          secretName: pebble-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pebble
+  namespace: pebble
+spec:
+  selector:
+    app: pebble
+  ports:
+  - name: acme
+    port: 14000
+  - name: management
+    port: 15000

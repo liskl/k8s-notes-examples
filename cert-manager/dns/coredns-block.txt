@@ -1,0 +1,4 @@
+_acme-challenge.lab.example:53 {
+    errors
+    forward . 10.96.0.53
+}

@@ -1,0 +1,26 @@
+# The same zone, now locked: only an update signed with the key "lab-key" is taken.
+# The key itself is in the Secret bind-tsig, as the file tsig.conf.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bind
+  namespace: bind
+data:
+  named.conf: |
+    options {
+      directory "/var/cache/bind";
+      dnssec-validation no;
+      recursion no;
+      listen-on port 8053 { any; };
+    };
+    controls { };
+    include "/etc/bind/tsig.conf";
+    zone "_acme-challenge.lab.example" {
+      type primary;
+      file "/etc/bind/db.acme";
+      allow-update { key "lab-key"; };
+    };
+  db.acme: |
+    $TTL 30
+    @   IN SOA ns.lab.example. root.lab.example. ( 1 604800 86400 2419200 30 )
+    @   IN NS  ns.lab.example.

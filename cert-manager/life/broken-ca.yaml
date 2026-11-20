@@ -1,0 +1,24 @@
+# A break: an Issuer on a CA Secret whose key is not the key of its certificate
+# (the chapter makes that Secret by hand), and a Certificate that asks it.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: broken-ca
+  namespace: web
+spec:
+  ca:
+    secretName: broken-ca
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: unlucky
+  namespace: web
+spec:
+  secretName: unlucky-tls
+  dnsNames:
+  - unlucky.lab.example
+  issuerRef:
+    group: cert-manager.io
+    kind: Issuer
+    name: broken-ca

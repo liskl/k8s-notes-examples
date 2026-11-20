@@ -1,0 +1,16 @@
+# A second ACME issuer on the same Pebble, proving names through DNS.
+#   sed "s/LAB_ROOT/$(base64 -w0 ca.crt)/" issuer.yaml | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: pebble-dns
+spec:
+  acme:
+    server: https://pebble.pebble.svc.cluster.local:14000/dir
+    caBundle: LAB_ROOT
+    privateKeySecretRef:
+      name: pebble-dns-account
+    solvers:
+    - dns01:
+        rfc2136:
+          nameserver: 10.96.0.53:53     # where the dynamic update is sent

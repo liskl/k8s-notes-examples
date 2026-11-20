@@ -1,0 +1,45 @@
+# One certificate for the server and one for the client, both from the lab's CA.
+# Each says what it is for: a server certificate cannot pose as a client, or the other way round.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: server
+  namespace: mtls
+spec:
+  secretName: server-tls
+  commonName: server
+  dnsNames:
+  - server.mtls.svc.cluster.local
+  duration: 1h
+  usages:
+  - digital signature
+  - server auth
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: lab-ca
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: client
+  namespace: mtls
+spec:
+  secretName: client-tls
+  commonName: client
+  dnsNames:
+  - client.mtls.svc.cluster.local
+  duration: 1h
+  usages:
+  - digital signature
+  - client auth
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: lab-ca

@@ -1,0 +1,21 @@
+# The door's certificate, written by hand. A Gateway reads a Secret from its own
+# namespace, so the Certificate lives beside the Gateway, in kgateway-system.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: www-tls
+  namespace: kgateway-system
+spec:
+  secretName: www-tls
+  dnsNames:
+  - www.lab.example
+  usages:
+  - digital signature
+  - server auth
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: lab-ca

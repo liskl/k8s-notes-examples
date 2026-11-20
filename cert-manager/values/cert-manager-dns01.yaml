@@ -1,0 +1,5 @@
+# Added to the book's values for DNS-01: before it presents a challenge, cert-manager
+# looks for the zone and then checks that the TXT record is visible. Both questions
+# go to the lab's own CoreDNS, and only there.
+dns01RecursiveNameservers: 10.96.0.10:53
+dns01RecursiveNameserversOnly: true
