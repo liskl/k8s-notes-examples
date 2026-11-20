@@ -1,0 +1,31 @@
+# Lets cert-manager's own approver approve requests for this issuer's two kinds.
+#
+# cert-manager approves a CertificateRequest only if its ServiceAccount may "approve" the request's
+# signer, a name made of the issuer's plural, its group and, after the slash, the issuer (in a namespace:
+# <namespace>.<name>). The chart grants that for cert-manager's own issuers only, so a request for a
+# LabIssuer waits, with no Approved condition and no Event, until this is applied (or until the chart's
+# approveSignerNames lists the two names below).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: lab-issuer-approver
+rules:
+  - apiGroups: [cert-manager.io]
+    resources: [signers]
+    verbs: [approve]
+    resourceNames:
+      - labissuers.issuer.lab.example/*
+      - labclusterissuers.issuer.lab.example/*
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: lab-issuer-approver
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: lab-issuer-approver
+subjects:
+  - kind: ServiceAccount
+    name: cert-manager
+    namespace: cert-manager

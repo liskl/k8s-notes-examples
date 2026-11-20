@@ -1,0 +1,15 @@
+# The address the Kubernetes API server forwards to: port 443 of the Service, 8443 in the Pod.
+apiVersion: v1
+kind: Service
+metadata:
+  name: lab-dns-webhook
+  namespace: lab-dns-webhook
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: lab-dns-webhook
+  ports:
+    - name: https
+      port: 443
+      targetPort: https
+      protocol: TCP

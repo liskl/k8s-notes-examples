@@ -1,0 +1,18 @@
+# Registers the group acme.lab.example with the Kubernetes API server: requests under
+# /apis/acme.lab.example/v1alpha1 are forwarded to the Service. The annotation asks cert-manager's
+# cainjector to fill spec.caBundle from the serving Certificate, so the forward is verified TLS.
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: v1alpha1.acme.lab.example
+  annotations:
+    cert-manager.io/inject-ca-from: lab-dns-webhook/lab-dns-webhook-tls
+spec:
+  group: acme.lab.example
+  version: v1alpha1
+  groupPriorityMinimum: 1000
+  versionPriority: 15
+  service:
+    name: lab-dns-webhook
+    namespace: lab-dns-webhook
+    port: 443

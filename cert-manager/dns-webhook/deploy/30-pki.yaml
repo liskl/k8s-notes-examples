@@ -1,0 +1,64 @@
+# The webhook's serving certificate, made by cert-manager itself: a self-signed Issuer signs a CA, a CA
+# Issuer signs the serving certificate. The Kubernetes API server must trust it: 60-apiservice.yaml
+# has cainjector copy the CA into the APIService.
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: lab-dns-webhook-selfsign
+  namespace: lab-dns-webhook
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: lab-dns-webhook-ca
+  namespace: lab-dns-webhook
+spec:
+  secretName: lab-dns-webhook-ca
+  isCA: true
+  commonName: lab-dns-webhook CA
+  duration: 43800h # 5 years
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+  issuerRef:
+    group: cert-manager.io
+    kind: Issuer
+    name: lab-dns-webhook-selfsign
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: lab-dns-webhook-ca
+  namespace: lab-dns-webhook
+spec:
+  ca:
+    secretName: lab-dns-webhook-ca
+---
+# The names are the Service's: the Kubernetes API server dials lab-dns-webhook.lab-dns-webhook.svc.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: lab-dns-webhook-tls
+  namespace: lab-dns-webhook
+spec:
+  secretName: lab-dns-webhook-tls
+  duration: 8760h # 1 year
+  dnsNames:
+    - lab-dns-webhook
+    - lab-dns-webhook.lab-dns-webhook
+    - lab-dns-webhook.lab-dns-webhook.svc
+  usages:
+    - server auth
+    - digital signature
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+  issuerRef:
+    group: cert-manager.io
+    kind: Issuer
+    name: lab-dns-webhook-ca

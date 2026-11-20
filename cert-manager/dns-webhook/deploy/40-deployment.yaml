@@ -1,0 +1,76 @@
+# The webhook itself: one Pod, not root, nothing writable, serving HTTPS on 8443 with the certificate
+# from 30-pki.yaml. Until that Secret exists the Pod waits in ContainerCreating.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lab-dns-webhook
+  namespace: lab-dns-webhook
+  labels:
+    app.kubernetes.io/name: lab-dns-webhook
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: lab-dns-webhook
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: lab-dns-webhook
+    spec:
+      serviceAccountName: lab-dns-webhook
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: webhook
+          # The book pins this image by digest. For an image you built and loaded with kind, see the
+          # README ("Build it and load it into kind"): lab-dns-webhook:dev and imagePullPolicy Never.
+          image: ghcr.io/liskl/k8s-notes-examples/lab-dns-webhook:1.0.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - --tls-cert-file=/tls/tls.crt
+            - --tls-private-key-file=/tls/tls.key
+            - --secure-port=8443
+          env:
+            # The API group the solver is served under: the APIService's group, the group in the
+            # domain-solver ClusterRole and the Issuer's webhook.groupName must all say the same.
+            - name: GROUP_NAME
+              value: acme.lab.example
+          ports:
+            - name: https
+              containerPort: 8443
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              scheme: HTTPS
+              path: /healthz
+              port: https
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              scheme: HTTPS
+              path: /healthz
+              port: https
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tls
+              mountPath: /tls
+              readOnly: true
+      volumes:
+        - name: tls
+          secret:
+            secretName: lab-dns-webhook-tls

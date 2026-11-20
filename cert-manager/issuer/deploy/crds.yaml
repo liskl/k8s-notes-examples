@@ -1,0 +1,115 @@
+# The two kinds lab-issuer adds, written by hand (no controller-gen): LabIssuer, namespaced, and
+# LabClusterIssuer, cluster-scoped. Each has one field, spec.secretName, and a status the issuer writes.
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: labissuers.issuer.lab.example
+spec:
+  group: issuer.lab.example
+  names:
+    kind: LabIssuer
+    listKind: LabIssuerList
+    plural: labissuers
+    singular: labissuer
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Ready
+          type: string
+          jsonPath: .status.conditions[?(@.type=="Ready")].status
+        - name: Reason
+          type: string
+          jsonPath: .status.conditions[?(@.type=="Ready")].reason
+        - name: Message
+          type: string
+          jsonPath: .status.conditions[?(@.type=="Ready")].message
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      schema:
+        openAPIV3Schema:
+          type: object
+          required: [spec]
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              required: [secretName]
+              properties:
+                secretName:
+                  description: >-
+                    The Secret that holds the CA: tls.crt, tls.key and, if it has one, ca.crt.
+                    It is read in the LabIssuer's own namespace.
+                  type: string
+                  minLength: 1
+            status:
+              description: Written by the issuer. issuer-lib owns its shape (a list of conditions).
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: labclusterissuers.issuer.lab.example
+spec:
+  group: issuer.lab.example
+  names:
+    kind: LabClusterIssuer
+    listKind: LabClusterIssuerList
+    plural: labclusterissuers
+    singular: labclusterissuer
+  scope: Cluster
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Ready
+          type: string
+          jsonPath: .status.conditions[?(@.type=="Ready")].status
+        - name: Reason
+          type: string
+          jsonPath: .status.conditions[?(@.type=="Ready")].reason
+        - name: Message
+          type: string
+          jsonPath: .status.conditions[?(@.type=="Ready")].message
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      schema:
+        openAPIV3Schema:
+          type: object
+          required: [spec]
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              required: [secretName]
+              properties:
+                secretName:
+                  description: >-
+                    The Secret that holds the CA: tls.crt, tls.key and, if it has one, ca.crt.
+                    It is read in the namespace the issuer's flag -cluster-resource-namespace names (by default the issuer's own, lab-issuer).
+                  type: string
+                  minLength: 1
+            status:
+              description: Written by the issuer. issuer-lib owns its shape (a list of conditions).
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
