@@ -1,0 +1,7 @@
+# Nothing with a key in it belongs in this folder: the lab makes its own.
+*.key
+*.pem
+*.crt
+*.p12
+*.jks
+*.kubeconfig

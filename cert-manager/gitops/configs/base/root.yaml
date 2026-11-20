@@ -1,0 +1,24 @@
+# The root CA of chapter 3: a certificate that signs itself and may sign others. Its Secret is in
+# cert-manager's own namespace, where a ClusterIssuer looks for it. Git holds this request and never
+# the key: cert-manager makes the key in the cluster.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: lab-root
+  namespace: cert-manager
+spec:
+  isCA: true
+  commonName: lab root CA
+  subject:
+    organizations:
+    - k8s-notes lab
+  secretName: lab-root
+  duration: 87600h               # ten years
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Never        # a renewal keeps the key, so what it signed still verifies
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: selfsigned

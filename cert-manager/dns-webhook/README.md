@@ -61,19 +61,23 @@ call it, and neither is this program's job.
 
 1. **Something must answer the zone's SOA.** Before it presents a challenge, cert-manager looks up
    the SOA of `_acme-challenge.<name>` to find the zone. `pebble-challtestsrv` answers SOA queries
-   with `NOTIMP`. A second server block in CoreDNS answers the SOA itself and forwards everything
-   else under the zone to the test server (here its Service has the fixed ClusterIP `10.96.0.54`,
-   with port 53 on both UDP and TCP):
+   with `NOTIMP`. The book gives the challenge name a zone of its own: a server block in CoreDNS
+   answers that zone's SOA itself and forwards everything else in it to the test server (here its
+   Service has the fixed ClusterIP `10.96.0.54`, with port 53 on both UDP and TCP). It is the file
+   `../solver/coredns-block.txt`:
 
    ```
-   lab.example:53 {
+   _acme-challenge.lab.example:53 {
        errors
-       template IN SOA lab.example {
-           answer "lab.example. 30 IN SOA ns.lab.example. root.lab.example. 1 7200 3600 1209600 30"
+       template IN SOA {
+           answer "_acme-challenge.lab.example. 30 IN SOA ns.lab.example. root.lab.example. 1 3600 600 86400 30"
        }
-       forward . 10.96.0.54:53
+       forward . 10.96.0.54
    }
    ```
+
+   The block covers `lab.example` and `*.lab.example`, the names the book proves through DNS. A
+   challenge for a deeper name (`_acme-challenge.shop.lab.example`) would need a block of its own.
 
 2. **cert-manager must ask CoreDNS, and only CoreDNS.** Two Helm values on the cert-manager chart
    (`10.96.0.10` is `kube-dns` on kind):

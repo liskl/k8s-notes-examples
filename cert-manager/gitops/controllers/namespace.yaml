@@ -1,0 +1,5 @@
+# Chapter 13: Helm's --create-namespace, written down.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cert-manager

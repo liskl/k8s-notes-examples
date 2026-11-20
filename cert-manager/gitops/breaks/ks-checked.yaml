@@ -1,0 +1,22 @@
+# Chapter 13: the same, with the Certificate expression of the configs layer. cert-manager writes
+# status.lastFailureTime when an issuance fails, and Flux gives up at once.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: unlucky-checked
+  namespace: flux-system
+spec:
+  interval: 10m
+  retryInterval: 30s
+  timeout: 1m
+  sourceRef:
+    kind: GitRepository
+    name: examples
+  path: ./cert-manager/gitops/breaks/checked
+  prune: true
+  wait: true
+  healthCheckExprs:
+  - apiVersion: cert-manager.io/v1
+    kind: Certificate
+    failed: has(status.lastFailureTime)
+    current: status.conditions.exists(e, e.type == 'Ready' && e.status == 'True')

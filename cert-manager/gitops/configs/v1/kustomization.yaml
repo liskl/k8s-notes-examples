@@ -1,0 +1,8 @@
+# Layer 2: a namespace, two issuers, the root and one leaf.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../base/namespace.yaml
+- ../base/issuers.yaml
+- ../base/root.yaml
+- ../base/www.yaml
