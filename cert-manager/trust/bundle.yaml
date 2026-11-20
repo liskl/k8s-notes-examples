@@ -1,0 +1,20 @@
+# One list of trusted roots for the whole cluster: the lab's root (from a ConfigMap in
+# cert-manager's namespace, the trust namespace) and, for calls to the outside world,
+# the public CAs trust-manager ships. It is written as the ConfigMap lab-trust into
+# every namespace that carries the label.
+apiVersion: trust.cert-manager.io/v1alpha1
+kind: Bundle
+metadata:
+  name: lab-trust
+spec:
+  sources:
+  - configMap:
+      name: lab-roots
+      key: roots.pem
+  - useDefaultCAs: true
+  target:
+    configMap:
+      key: ca.crt
+    namespaceSelector:
+      matchLabels:
+        lab/trust: "true"

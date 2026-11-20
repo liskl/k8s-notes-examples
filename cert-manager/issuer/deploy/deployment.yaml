@@ -26,7 +26,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: lab-issuer
-          image: ghcr.io/liskl/k8s-notes-examples/lab-issuer:1.0.1
+          image: ghcr.io/liskl/k8s-notes-examples/lab-issuer:1.0.1@sha256:567ab191a5a07fe6eeec5ed8b5e520b7c67eea098b7ad2b8b96b49995cc93b5a
           # The defaults, written out so they can be read and changed here. The README lists every flag.
           args:
             - -zone=lab.example

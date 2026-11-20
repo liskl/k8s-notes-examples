@@ -1,0 +1,40 @@
+# A break: the same Pod without fs-group. The files belong to root, and the app is not root.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nogroup
+  namespace: percert
+  labels:
+    app: nogroup
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    runAsGroup: 65532
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: nogroup
+    image: ghcr.io/liskl/k8s-notes-examples/cert-manager-demo:1.0.0@sha256:05f8e598f9b7b1f03e58bf9c43243cb1ee0870ed1113ce18b827c7e93fe86346
+    args: [serve, -cert, /tls/tls.crt, -key, /tls/tls.key, -client-auth, none]
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: [ALL]
+    volumeMounts:
+    - name: tls
+      mountPath: /tls
+      readOnly: true
+  volumes:
+  - name: tls
+    csi:
+      driver: csi.cert-manager.io
+      readOnly: true
+      volumeAttributes:
+        csi.cert-manager.io/issuer-name: lab-ca
+        csi.cert-manager.io/issuer-kind: ClusterIssuer       # the default is Issuer
+        csi.cert-manager.io/issuer-group: cert-manager.io
+        csi.cert-manager.io/dns-names: ${POD_NAME}.${POD_NAMESPACE}.svc.cluster.local
+        csi.cert-manager.io/key-usages: digital signature,server auth
+        csi.cert-manager.io/duration: 3m                     # short, to watch it renew

@@ -1,0 +1,9 @@
+# The simplest issuer: it signs each certificate with the certificate's own key.
+# An Issuer lives in one namespace and serves only that namespace.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: selfsigned
+  namespace: first
+spec:
+  selfSigned: {}

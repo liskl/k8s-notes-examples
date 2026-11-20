@@ -1,0 +1,16 @@
+# No. 00's GatewayParameters with one more port: the Gateway's Service gives
+# port 443 the nodePort 30443, the one kind.yaml maps to 127.0.0.1:8443.
+apiVersion: gateway.kgateway.dev/v1alpha1
+kind: GatewayParameters
+metadata:
+  name: gw-params
+  namespace: kgateway-system
+spec:
+  kube:
+    service:
+      type: LoadBalancer
+      ports:
+      - port: 80
+        nodePort: 30080
+      - port: 443
+        nodePort: 30443

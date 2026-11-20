@@ -1,0 +1,15 @@
+# A request the reader's issuer will sign. It asks for three days; the house allows one.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: good
+  namespace: own
+spec:
+  secretName: good-tls
+  dnsNames:
+  - good.lab.example
+  duration: 72h
+  issuerRef:
+    group: issuer.lab.example
+    kind: LabClusterIssuer
+    name: lab

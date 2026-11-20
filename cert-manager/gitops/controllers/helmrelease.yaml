@@ -1,0 +1,42 @@
+# Chapter 13: chapter 1's helm install as an object. The values are those of ../../values/cert-manager.yaml
+# with one left out: config.gatewayAPI.enabled, since this cluster has no Gateway API kinds.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: cert-manager
+  namespace: cert-manager
+spec:
+  interval: 1h
+  timeout: 5m
+  releaseName: cert-manager
+  chartRef:
+    kind: OCIRepository
+    name: cert-manager
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  values:
+    crds:
+      enabled: true     # the chart installs the six CustomResourceDefinitions
+      keep: false       # and removing the release removes them, with every Certificate
+    image:
+      digest: sha256:9f4f96a33c7774cef24466fcd85031997531a03a8d117f151126baa8d1290dcc
+    webhook:
+      image:
+        digest: sha256:055ac8e9de6a0ba6763794838fe38944acc650f68ebe1b01dd8be079e580f458
+    cainjector:
+      image:
+        digest: sha256:083d0e906f8eb44e255fe4ff817ae54e49f9ed82e22f1011bb4e9e4f4b8a641f
+    startupapicheck:
+      image:
+        digest: sha256:1c519d4afca1413d1e4ccd78bdc756184418ab55a34569a3b3de39d32f9974e1
+    acmesolver:
+      image:
+        digest: sha256:c8c1225bb2fe8ab37a330b77f0d8c2ee6a41210fcb54fc07ca606ab9a022b8b7
+    config:
+      # the lab's short backoff: a failed issuance is tried again after 30s, 1m, 2m
+      certificateRequestMinimumBackoffDuration: 30s
+      certificateRequestMaximumBackoffDuration: 2m

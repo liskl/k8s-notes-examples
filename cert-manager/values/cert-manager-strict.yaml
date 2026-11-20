@@ -1,0 +1,3 @@
+# Added to the book's values for chapter 10: cert-manager stops approving its own
+# requests. From here on, something else has to say yes.
+disableAutoApproval: true

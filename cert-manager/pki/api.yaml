@@ -1,0 +1,20 @@
+# A leaf certificate from the lab's CA, for a server.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: api
+  namespace: web
+spec:
+  secretName: api-tls
+  dnsNames:
+  - api.lab.example
+  usages:
+  - digital signature
+  - server auth
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: lab-ca

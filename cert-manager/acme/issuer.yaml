@@ -1,0 +1,20 @@
+# The ACME issuer. LAB_ROOT is replaced by the lab's root certificate in base64:
+#   sed "s/LAB_ROOT/$(base64 -w0 ca.crt)/" issuer.yaml | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: pebble
+spec:
+  acme:
+    server: https://pebble.pebble.svc.cluster.local:14000/dir
+    caBundle: LAB_ROOT             # who may sign the ACME server's own certificate
+    privateKeySecretRef:
+      name: pebble-account         # the account key, made on first use, in cert-manager's namespace
+    solvers:
+    - http01:
+        gatewayHTTPRoute:          # answer the challenge with an HTTPRoute on this Gateway
+          serviceType: ClusterIP
+          parentRefs:
+          - name: http
+            namespace: kgateway-system
+            kind: Gateway

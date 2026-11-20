@@ -1,0 +1,22 @@
+# One hour of life, renewed 55 minutes before the end: five minutes after it is issued.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: short
+  namespace: web
+spec:
+  secretName: short-tls
+  dnsNames:
+  - short.lab.example
+  duration: 1h                   # the shortest cert-manager allows
+  renewBefore: 55m               # at most duration minus five minutes
+  usages:
+  - digital signature
+  - server auth
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: lab-ca

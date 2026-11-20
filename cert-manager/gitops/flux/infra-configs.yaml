@@ -1,0 +1,32 @@
+# Layer 2: what needs cert-manager's kinds and its webhook: the issuers and the Certificates.
+# dependsOn holds it back until layer 1 is Ready. wait: true then holds it until what it applied is
+# healthy, and the expressions say what healthy means for cert-manager's kinds.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: infra-configs
+  namespace: flux-system
+spec:
+  dependsOn:
+  - name: infra-controllers
+  interval: 10m
+  retryInterval: 30s
+  timeout: 2m
+  sourceRef:
+    kind: GitRepository
+    name: examples
+  path: ./cert-manager/gitops/configs/v1
+  prune: true
+  wait: true
+  healthCheckExprs:
+  # An issuer is healthy when it says Ready True. No "failed" here: a CA issuer is Ready False until
+  # its Secret exists, which is normal when its root is made in the same apply.
+  - apiVersion: cert-manager.io/v1
+    kind: ClusterIssuer
+    current: status.conditions.exists(e, e.type == 'Ready' && e.status == 'True')
+  # A Certificate is healthy when it says Ready True, and has failed when an issuance has failed.
+  # Ready False is not a failure: every new Certificate says that until its first Secret is written.
+  - apiVersion: cert-manager.io/v1
+    kind: Certificate
+    failed: has(status.lastFailureTime)
+    current: status.conditions.exists(e, e.type == 'Ready' && e.status == 'True')

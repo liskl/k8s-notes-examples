@@ -1,0 +1,16 @@
+# The same Bundle without the public CAs: inside the lab, only the lab's root is trusted.
+apiVersion: trust.cert-manager.io/v1alpha1
+kind: Bundle
+metadata:
+  name: lab-trust
+spec:
+  sources:
+  - configMap:
+      name: lab-roots
+      key: roots.pem
+  target:
+    configMap:
+      key: ca.crt
+    namespaceSelector:
+      matchLabels:
+        lab/trust: "true"

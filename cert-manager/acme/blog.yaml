@@ -1,0 +1,14 @@
+# A certificate from the ACME server, for a name the lab must prove it controls.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: blog
+  namespace: hello
+spec:
+  secretName: blog-tls
+  dnsNames:
+  - blog.lab.example
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: pebble

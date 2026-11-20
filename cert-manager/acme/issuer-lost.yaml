@@ -1,0 +1,34 @@
+# A break: the solver's route names a Gateway that does not exist.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: pebble-lost
+  namespace: hello
+spec:
+  acme:
+    server: https://pebble.pebble.svc.cluster.local:14000/dir
+    caBundle: LAB_ROOT
+    privateKeySecretRef:
+      name: pebble-lost-account
+    solvers:
+    - http01:
+        gatewayHTTPRoute:
+          serviceType: ClusterIP
+          parentRefs:
+          - name: nowhere
+            namespace: kgateway-system
+            kind: Gateway
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: lost
+  namespace: hello
+spec:
+  secretName: lost-tls
+  dnsNames:
+  - lost.lab.example
+  issuerRef:
+    group: cert-manager.io
+    kind: Issuer
+    name: pebble-lost

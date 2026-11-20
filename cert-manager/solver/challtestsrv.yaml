@@ -1,0 +1,60 @@
+# Pebble's challenge test server: a DNS server that answers whatever it is told to
+# over a small HTTP API on its management port. Only its DNS and management ports are on.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: challtestsrv
+  namespace: pebble
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: challtestsrv
+  template:
+    metadata:
+      labels:
+        app: challtestsrv
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: challtestsrv
+        image: ghcr.io/letsencrypt/pebble-challtestsrv:2.10.3@sha256:0152c8cb506e2ecba2900ed47d23932e27e3e6575a7d2c8ef93c7719ee3dea4c
+        args: ["-dnsserver", ":8053", "-management", ":8055", "-defaultIPv4", "", "-defaultIPv6", "",
+               "-http01", "", "-https01", "", "-tlsalpn01", "", "-doh", ""]
+        ports:
+        - containerPort: 8053
+          protocol: UDP
+        - containerPort: 8053
+          protocol: TCP
+        - containerPort: 8055
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: challtestsrv
+  namespace: pebble
+spec:
+  clusterIP: 10.96.0.54
+  selector:
+    app: challtestsrv
+  ports:
+  - name: dns-udp
+    port: 53
+    targetPort: 8053
+    protocol: UDP
+  - name: dns-tcp
+    port: 53
+    targetPort: 8053
+    protocol: TCP
+  - name: management
+    port: 8055

@@ -1,0 +1,16 @@
+# Chapter 3's two issuers: one that only signs the root, and one that signs with the root's key.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned
+spec:
+  selfSigned: {}
+---
+# Its Secret is made by root.yaml in the same apply, so for its first seconds this issuer is not ready.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: lab-ca
+spec:
+  ca:
+    secretName: lab-root

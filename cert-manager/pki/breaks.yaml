@@ -1,0 +1,19 @@
+# Two CA issuers that cannot work: one names a Secret that is not there,
+# one names the Secret of a leaf, which is not a CA.
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: no-secret
+  namespace: web
+spec:
+  ca:
+    secretName: not-made-yet
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: not-a-ca
+  namespace: web
+spec:
+  ca:
+    secretName: api-tls

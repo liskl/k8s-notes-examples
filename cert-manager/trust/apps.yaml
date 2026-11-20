@@ -1,0 +1,105 @@
+# The same two apps, trusting the Bundle's ConfigMap (/trust/ca.crt) in place of the
+# ca.crt in their own Secrets.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server
+  namespace: mtls
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: server
+  template:
+    metadata:
+      labels:
+        app: server
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: server
+        image: ghcr.io/liskl/k8s-notes-examples/cert-manager-demo:1.0.0@sha256:05f8e598f9b7b1f03e58bf9c43243cb1ee0870ed1113ce18b827c7e93fe86346
+        args: [serve, -cert, /tls/tls.crt, -key, /tls/tls.key, -ca, /trust/ca.crt, -client-auth, require]
+        ports:
+        - containerPort: 8443
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+        - name: tls
+          mountPath: /tls
+          readOnly: true
+        - name: trust
+          mountPath: /trust
+          readOnly: true
+      volumes:
+      - name: tls
+        secret:
+          secretName: server-tls
+      - name: trust
+        configMap:
+          name: lab-trust
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: server
+  namespace: mtls
+spec:
+  selector:
+    app: server
+  ports:
+  - port: 8443
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client
+  namespace: mtls
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: client
+  template:
+    metadata:
+      labels:
+        app: client
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: client
+        image: ghcr.io/liskl/k8s-notes-examples/cert-manager-demo:1.0.0@sha256:05f8e598f9b7b1f03e58bf9c43243cb1ee0870ed1113ce18b827c7e93fe86346
+        args: [call, -url, "https://server.mtls.svc.cluster.local:8443/", -cert, /tls/tls.crt, -key, /tls/tls.key,
+               -ca, /trust/ca.crt, -every, 5s]
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+        - name: tls
+          mountPath: /tls
+          readOnly: true
+        - name: trust
+          mountPath: /trust
+          readOnly: true
+      volumes:
+      - name: tls
+        secret:
+          secretName: client-tls
+      - name: trust
+        configMap:
+          name: lab-trust

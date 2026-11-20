@@ -1,0 +1,94 @@
+# The book's demo image twice: a server that only talks to clients with a certificate
+# it can check, and a client that calls it every five seconds. Each mounts its Secret
+# as a folder (no subPath), and reads the files again for every connection.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server
+  namespace: mtls
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: server
+  template:
+    metadata:
+      labels:
+        app: server
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: server
+        image: ghcr.io/liskl/k8s-notes-examples/cert-manager-demo:1.0.0@sha256:05f8e598f9b7b1f03e58bf9c43243cb1ee0870ed1113ce18b827c7e93fe86346
+        args: [serve, -cert, /tls/tls.crt, -key, /tls/tls.key, -ca, /tls/ca.crt, -client-auth, require]
+        ports:
+        - containerPort: 8443
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+        - name: tls
+          mountPath: /tls
+          readOnly: true
+      volumes:
+      - name: tls
+        secret:
+          secretName: server-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: server
+  namespace: mtls
+spec:
+  selector:
+    app: server
+  ports:
+  - port: 8443
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client
+  namespace: mtls
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: client
+  template:
+    metadata:
+      labels:
+        app: client
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: client
+        image: ghcr.io/liskl/k8s-notes-examples/cert-manager-demo:1.0.0@sha256:05f8e598f9b7b1f03e58bf9c43243cb1ee0870ed1113ce18b827c7e93fe86346
+        args: [call, -url, "https://server.mtls.svc.cluster.local:8443/", -cert, /tls/tls.crt, -key, /tls/tls.key,
+               -ca, /tls/ca.crt, -every, 5s]
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+        - name: tls
+          mountPath: /tls
+          readOnly: true
+      volumes:
+      - name: tls
+        secret:
+          secretName: client-tls

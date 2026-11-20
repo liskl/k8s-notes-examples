@@ -1,0 +1,6 @@
+# Chapter 13, the wrong way: both layers in one list.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../controllers
+- ../configs/v1

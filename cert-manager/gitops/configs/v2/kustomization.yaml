@@ -1,0 +1,8 @@
+# Layer 2 as it would be one commit later: the same list, without the leaf. The book pushes nothing
+# to Git, so a change of path stands in for a commit.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../base/namespace.yaml
+- ../base/issuers.yaml
+- ../base/root.yaml

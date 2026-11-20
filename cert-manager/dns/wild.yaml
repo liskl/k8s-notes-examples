@@ -1,0 +1,15 @@
+# A wildcard: HTTP-01 cannot prove one, DNS-01 can.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: wild
+  namespace: hello
+spec:
+  secretName: wild-tls
+  dnsNames:
+  - "*.lab.example"
+  - lab.example
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: pebble-dns

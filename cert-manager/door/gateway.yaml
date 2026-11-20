@@ -1,0 +1,32 @@
+# No. 00's Gateway with a second listener: HTTPS on 443 for www.lab.example,
+# ended at the Gateway (Terminate) with the key pair in the Secret www-tls.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: http
+  namespace: kgateway-system
+spec:
+  gatewayClassName: kgateway
+  infrastructure:
+    parametersRef:
+      group: gateway.kgateway.dev
+      kind: GatewayParameters
+      name: gw-params
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: All
+  - name: https
+    protocol: HTTPS
+    port: 443
+    hostname: www.lab.example
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - name: www-tls
+    allowedRoutes:
+      namespaces:
+        from: All

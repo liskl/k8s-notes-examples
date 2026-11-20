@@ -1,0 +1,28 @@
+# A break: two Certificates that name one Secret.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: twin-a
+  namespace: web
+spec:
+  secretName: twins-tls
+  dnsNames:
+  - a.lab.example
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: lab-ca
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: twin-b
+  namespace: web
+spec:
+  secretName: twins-tls
+  dnsNames:
+  - b.lab.example
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: lab-ca

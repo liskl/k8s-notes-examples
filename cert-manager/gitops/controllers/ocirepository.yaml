@@ -1,0 +1,16 @@
+# Chapter 13: the chart chapter 1 pulled by hand, as a source. The tag says which version; the digest
+# is what Flux goes by, so a tag that moved would change nothing here.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: cert-manager
+  namespace: cert-manager
+spec:
+  interval: 1h
+  url: oci://quay.io/jetstack/charts/cert-manager
+  layerSelector:
+    mediaType: application/vnd.cncf.helm.chart.content.v1.tar+gzip
+    operation: copy
+  ref:
+    tag: v1.21.3
+    digest: sha256:e482675aec32862d323a9218293ff7de81192337998615e4378c56498473f240

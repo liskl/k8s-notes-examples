@@ -1,0 +1,5 @@
+# Chapter 13: the namespace of the one application certificate.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo

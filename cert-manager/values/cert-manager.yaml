@@ -1,0 +1,27 @@
+# Field Guide 09's values for the cert-manager chart v1.21.3.
+crds:
+  enabled: true     # the chart installs the six CustomResourceDefinitions
+  keep: false       # and helm uninstall removes them, with every Certificate (chapter 14)
+# The five images by digest, as the registry served them on 2026-11-19.
+image:
+  digest: sha256:9f4f96a33c7774cef24466fcd85031997531a03a8d117f151126baa8d1290dcc
+webhook:
+  image:
+    digest: sha256:055ac8e9de6a0ba6763794838fe38944acc650f68ebe1b01dd8be079e580f458
+cainjector:
+  image:
+    digest: sha256:083d0e906f8eb44e255fe4ff817ae54e49f9ed82e22f1011bb4e9e4f4b8a641f
+startupapicheck:
+  image:
+    digest: sha256:1c519d4afca1413d1e4ccd78bdc756184418ab55a34569a3b3de39d32f9974e1
+acmesolver:
+  image:
+    digest: sha256:c8c1225bb2fe8ab37a330b77f0d8c2ee6a41210fcb54fc07ca606ab9a022b8b7
+# The controller's own configuration file. The chart writes it to a ConfigMap.
+config:
+  gatewayAPI:
+    enabled: true   # off by default; chapters 5 and 6 need it
+  # A failed issuance is tried again after 1h, 2h, 4h ... up to 32h by default.
+  # The lab waits 30s, 1m, 2m, so a page can show the retry.
+  certificateRequestMinimumBackoffDuration: 30s
+  certificateRequestMaximumBackoffDuration: 2m

@@ -1,0 +1,25 @@
+# Nothing is wrong here: a second root and a CA issuer on it, as in the configs layer.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: copied-root
+  namespace: cert-manager
+spec:
+  isCA: true
+  commonName: copied root CA
+  secretName: copied-root
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: selfsigned
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: copied-ca
+spec:
+  ca:
+    secretName: copied-root

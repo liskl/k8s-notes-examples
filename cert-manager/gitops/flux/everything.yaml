@@ -1,0 +1,18 @@
+# Chapter 13, the wrong way: one Flux Kustomization for cert-manager's chart and for the issuers and
+# Certificates that need it. It cannot work: Flux first asks the API server for a dry run of everything,
+# and the kinds ClusterIssuer and Certificate do not exist until the chart in the same list has run.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: everything
+  namespace: flux-system
+spec:
+  interval: 10m
+  retryInterval: 30s
+  timeout: 3m
+  sourceRef:
+    kind: GitRepository
+    name: examples
+  path: ./cert-manager/gitops/everything
+  prune: true
+  wait: true

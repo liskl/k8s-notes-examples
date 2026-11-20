@@ -1,0 +1,7 @@
+9ec67938b2981d8b333af61b3fcf53e26b4f6f5deb7ccda3de4ea116bb373a17  cert-manager-v1.21.3.tgz
+690f38f71bb5540ea98bc6a33e1ab0caad246a3c2b932a84d4671369b6736fe4  cmctl_linux_amd64
+9230abdfe42580c7dd2996432d1bf6a2521b659a7f38e26c3b9a91e8033ea5b6  trust-manager-v0.26.0.tgz
+6cf4bc1ec33b0c0890aa54beca14242dececfec23714f3ad19d5289deb96a6a9  cert-manager-csi-driver-v0.16.1.tgz
+26ed4380e709a6e0ef87bd9a5e4633806f66bc39896977143be17e2e4aa9d766  cert-manager-approver-policy-v0.29.0.tgz
+208dd7012c04fedeed5b2d0b6e63df3b15b1c34a381527811685c098bc9f8659  flux_2.10.0_linux_amd64.tar.gz
+17c7b0dfc808063e0ffd8afa92641a1baec0f1c01921d74aa5e8895e5538a549  flux-operator-0.62.1.yaml
