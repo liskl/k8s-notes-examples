@@ -1,0 +1,5 @@
+# Field Guide 09's values for the cert-manager-approver-policy chart v0.29.0.
+crds:
+  keep: false
+image:
+  digest: sha256:b516dba9e41d8e29957fa8f16479fb109741f7d3f418ef6aa2b47221dfdd5ef3

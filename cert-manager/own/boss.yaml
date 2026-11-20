@@ -1,0 +1,15 @@
+# A break: a request to become a CA.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: boss
+  namespace: own
+spec:
+  secretName: boss-tls
+  dnsNames:
+  - boss.lab.example
+  isCA: true
+  issuerRef:
+    group: issuer.lab.example
+    kind: LabClusterIssuer
+    name: lab

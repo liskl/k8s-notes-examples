@@ -1,0 +1,14 @@
+# A break: a name outside the lab's zone.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: outside
+  namespace: own
+spec:
+  secretName: outside-tls
+  dnsNames:
+  - www.example.org
+  issuerRef:
+    group: issuer.lab.example
+    kind: LabClusterIssuer
+    name: lab

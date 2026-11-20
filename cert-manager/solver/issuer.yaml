@@ -1,0 +1,19 @@
+# A third ACME issuer on the same Pebble: its DNS-01 solver is the reader's webhook.
+#   sed "s/LAB_ROOT/$(base64 -w0 ca.crt)/" issuer.yaml | kubectl apply -f -
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: pebble-solver
+spec:
+  acme:
+    server: https://pebble.pebble.svc.cluster.local:14000/dir
+    caBundle: LAB_ROOT
+    privateKeySecretRef:
+      name: pebble-solver-account
+    solvers:
+    - dns01:
+        webhook:
+          groupName: acme.lab.example      # the API group the webhook serves
+          solverName: challtestsrv         # the solver's name inside it
+          config:                          # handed to the solver with every call
+            managementURL: http://challtestsrv.pebble.svc.cluster.local:8055

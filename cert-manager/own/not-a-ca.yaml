@@ -1,0 +1,8 @@
+# A break: a namespaced LabIssuer on a Secret that holds a leaf, not a CA.
+apiVersion: issuer.lab.example/v1alpha1
+kind: LabIssuer
+metadata:
+  name: not-a-ca
+  namespace: own
+spec:
+  secretName: good-tls

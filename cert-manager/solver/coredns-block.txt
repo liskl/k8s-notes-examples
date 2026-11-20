@@ -1,0 +1,7 @@
+_acme-challenge.lab.example:53 {
+    errors
+    template IN SOA {
+        answer "_acme-challenge.lab.example. 30 IN SOA ns.lab.example. root.lab.example. 1 7200 3600 1209600 30"
+    }
+    forward . 10.96.0.54
+}

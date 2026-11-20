@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: lone
+  namespace: hello
+spec:
+  secretName: lone-tls
+  dnsNames:
+  - "*.lab.example"
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: pebble-solver

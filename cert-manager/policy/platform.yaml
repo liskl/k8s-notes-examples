@@ -1,0 +1,57 @@
+# The platform's rule: in the namespaces the earlier chapters built, any request to
+# one of the lab's own issuers passes, whatever it asks for. Without it their
+# certificates would stop renewing the day the built-in approver was turned off.
+apiVersion: policy.cert-manager.io/v1alpha1
+kind: CertificateRequestPolicy
+metadata:
+  name: platform
+spec:
+  allowed:
+    commonName:
+      value: "*"
+    dnsNames:
+      values: ["*"]
+    isCA: true
+    usages:
+    - digital signature
+    - key encipherment
+    - cert sign
+    - server auth
+    - client auth
+  selector:
+    issuerRef:
+      group: cert-manager.io
+    namespace:
+      matchNames:
+      - cert-manager
+      - kgateway-system
+      - pebble
+      - hello
+      - web
+      - mtls
+      - first
+---
+# Who may use the policy: a request is only held to a policy its requester may "use".
+# For a Certificate the requester is cert-manager's own ServiceAccount.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: policy:platform
+rules:
+- apiGroups: [policy.cert-manager.io]
+  resources: [certificaterequestpolicies]
+  verbs: [use]
+  resourceNames: [platform]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: policy:platform
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: policy:platform
+subjects:
+- kind: ServiceAccount
+  name: cert-manager
+  namespace: cert-manager

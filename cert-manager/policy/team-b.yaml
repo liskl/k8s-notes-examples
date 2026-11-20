@@ -1,0 +1,51 @@
+# Team B's rule: names under team-b.svc.cluster.local, and only on ECDSA keys.
+apiVersion: policy.cert-manager.io/v1alpha1
+kind: CertificateRequestPolicy
+metadata:
+  name: team-b
+spec:
+  allowed:
+    dnsNames:
+      values:
+      - "*.team-b.svc.cluster.local"
+      required: true
+    usages:
+    - digital signature
+    - key encipherment
+    - server auth
+  constraints:
+    privateKey:
+      algorithm: ECDSA
+  selector:
+    issuerRef:
+      group: cert-manager.io
+      kind: ClusterIssuer
+      name: lab-ca
+    namespace:
+      matchNames:
+      - team-b
+---
+# Who may use the policy: a request is only held to a policy its requester may "use".
+# For a Certificate the requester is cert-manager's own ServiceAccount.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: policy:team-b
+rules:
+- apiGroups: [policy.cert-manager.io]
+  resources: [certificaterequestpolicies]
+  verbs: [use]
+  resourceNames: [team-b]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: policy:team-b
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: policy:team-b
+subjects:
+- kind: ServiceAccount
+  name: cert-manager
+  namespace: cert-manager

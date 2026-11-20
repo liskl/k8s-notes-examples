@@ -1,0 +1,43 @@
+# A Pod with a certificate of its own. No Certificate object and no Secret: the volume
+# asks cert-manager for a certificate when the Pod starts, and the private key is made
+# on the node and never leaves it.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: solo
+  namespace: percert
+  labels:
+    app: solo
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    runAsGroup: 65532
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+  - name: solo
+    image: ghcr.io/liskl/k8s-notes-examples/cert-manager-demo:1.0.0@sha256:05f8e598f9b7b1f03e58bf9c43243cb1ee0870ed1113ce18b827c7e93fe86346
+    args: [serve, -cert, /tls/tls.crt, -key, /tls/tls.key, -client-auth, none]
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: [ALL]
+    volumeMounts:
+    - name: tls
+      mountPath: /tls
+      readOnly: true
+  volumes:
+  - name: tls
+    csi:
+      driver: csi.cert-manager.io
+      readOnly: true
+      volumeAttributes:
+        csi.cert-manager.io/issuer-name: lab-ca
+        csi.cert-manager.io/issuer-kind: ClusterIssuer       # the default is Issuer
+        csi.cert-manager.io/issuer-group: cert-manager.io
+        csi.cert-manager.io/dns-names: ${POD_NAME}.${POD_NAMESPACE}.svc.cluster.local
+        csi.cert-manager.io/key-usages: digital signature,server auth
+        csi.cert-manager.io/duration: 3m                     # short, to watch it renew
+        csi.cert-manager.io/fs-group: "65532"                # the group that may read the files

@@ -1,0 +1,30 @@
+# The CA the reader's issuer signs with: one more intermediate from the lab's root,
+# in the issuer's own namespace, where a LabClusterIssuer looks for its Secret.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: lab-issuer-ca
+  namespace: lab-issuer
+spec:
+  isCA: true
+  commonName: lab issuer CA
+  subject:
+    organizations:
+    - k8s-notes lab
+  secretName: lab-issuer-ca
+  duration: 8760h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Never
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: lab-root-ca
+---
+apiVersion: issuer.lab.example/v1alpha1
+kind: LabClusterIssuer
+metadata:
+  name: lab
+spec:
+  secretName: lab-issuer-ca
