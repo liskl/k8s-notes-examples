@@ -1,0 +1,62 @@
+# RBAC in two directions: what the webhook may ask the Kubernetes API, and who may call the webhook.
+#
+# The webhook is an aggregated API server. The Kubernetes API server forwards cert-manager's request to
+# it with the caller's name in headers, and the webhook must (1) trust those headers and (2) ask
+# whether that caller is allowed. The first two bindings are for that.
+---
+# (1) Read the ConfigMap extension-apiserver-authentication in kube-system: it holds the CA that signs
+# the Kubernetes API server's proxy client certificate. The Role itself ships with Kubernetes.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lab-dns-webhook:webhook-authentication-reader
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: extension-apiserver-authentication-reader
+subjects:
+  - kind: ServiceAccount
+    name: lab-dns-webhook
+    namespace: lab-dns-webhook
+---
+# (2) Create SubjectAccessReviews (and TokenReviews), to hand each authorization decision back to the
+# Kubernetes API server. The ClusterRole ships with Kubernetes.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: lab-dns-webhook:auth-delegator
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: lab-dns-webhook
+    namespace: lab-dns-webhook
+---
+# Who may call the solver: "create" on the resource named after the solver, in the webhook's group.
+# cert-manager POSTs a ChallengePayload to /apis/acme.lab.example/v1alpha1/challtestsrv.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: lab-dns-webhook:domain-solver
+rules:
+  - apiGroups: ["acme.lab.example"]
+    resources: ["challtestsrv"]
+    verbs: ["create"]
+---
+# ... and the caller is cert-manager's controller. Change the subject if cert-manager runs under
+# another ServiceAccount or namespace.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: lab-dns-webhook:domain-solver
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: lab-dns-webhook:domain-solver
+subjects:
+  - kind: ServiceAccount
+    name: cert-manager
+    namespace: cert-manager

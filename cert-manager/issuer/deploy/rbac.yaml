@@ -1,0 +1,76 @@
+# The issuer's namespace, its ServiceAccount, and the least it needs: read CertificateRequests and write
+# their status, read its own two kinds and write their status, get (not list, not watch) Secrets, write
+# Events, and hold one Lease for leader election.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lab-issuer
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: lab-issuer
+  namespace: lab-issuer
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: lab-issuer
+rules:
+  - apiGroups: [cert-manager.io]
+    resources: [certificaterequests]
+    verbs: [get, list, watch]
+  - apiGroups: [cert-manager.io]
+    resources: [certificaterequests/status]
+    verbs: [patch]
+  - apiGroups: [issuer.lab.example]
+    resources: [labissuers, labclusterissuers]
+    verbs: [get, list, watch]
+  - apiGroups: [issuer.lab.example]
+    resources: [labissuers/status, labclusterissuers/status]
+    verbs: [patch]
+  # A LabIssuer may name a Secret in any namespace it lives in, so this is cluster-wide. It is "get"
+  # only: the issuer reads each Secret by name when it needs it and keeps no cache of Secrets.
+  - apiGroups: [""]
+    resources: [secrets]
+    verbs: [get]
+  - apiGroups: ["", events.k8s.io]
+    resources: [events]
+    verbs: [create, patch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: lab-issuer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: lab-issuer
+subjects:
+  - kind: ServiceAccount
+    name: lab-issuer
+    namespace: lab-issuer
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: lab-issuer-leader-election
+  namespace: lab-issuer
+rules:
+  - apiGroups: [coordination.k8s.io]
+    resources: [leases]
+    verbs: [get, list, watch, create, update, patch, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lab-issuer-leader-election
+  namespace: lab-issuer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: lab-issuer-leader-election
+subjects:
+  - kind: ServiceAccount
+    name: lab-issuer
+    namespace: lab-issuer

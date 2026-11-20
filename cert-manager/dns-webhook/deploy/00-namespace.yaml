@@ -1,0 +1,5 @@
+# The webhook's own namespace: its Pod, its Service and its serving certificate live here.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lab-dns-webhook
